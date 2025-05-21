@@ -7,10 +7,12 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// </summary>
 /// <param name="theme">The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.</param>
 /// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Defaults.LevelLabels"/>.</param>
+/// <param name="newLine">Whether to add a new line after each log entry. Defaults to <see langword="false"/>.</param>
 /// <param name="writer">The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.</param>
 public abstract class SpectreConsoleFormatterBase(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
+	bool newLine = false,
 	IAnsiConsole? writer = null)
 	: ISpectreConsoleFormatter
 {
@@ -28,6 +30,11 @@ public abstract class SpectreConsoleFormatterBase(
 	/// The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.
 	/// </summary>
 	protected IAnsiConsole Writer { get; } = writer ?? AnsiConsole.Console;
+
+	/// <summary>
+	/// Gets a value indicating whether a new line should be added after the current operation.
+	/// </summary>
+	protected bool NewLine { get; } = newLine;
 
 	/// <summary>
 	/// Creates a new console formatter with the specified name and timestamp.

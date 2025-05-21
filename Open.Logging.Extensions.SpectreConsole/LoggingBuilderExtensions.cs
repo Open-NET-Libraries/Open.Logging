@@ -31,6 +31,7 @@ public static class LoggingBuilderExtensions
 		var formatter = TFormatter.Create(
 			options?.Theme,
 			options?.Labels,
+			options?.NewLine ?? false,
 			options?.Writer);
 
 		return builder.AddConsoleDelegateFormatter(name, formatter.Write, synchronize: true);

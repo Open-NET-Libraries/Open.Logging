@@ -1,17 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Open.Logging.Extensions.Demo;
-using Open.Logging.Extensions.FormatterDemo;
 using Open.Logging.Extensions.SpectreConsole;
 using Spectre.Console;
-using System;
-using System.Globalization;
-using System.Threading.Tasks;
 
 // Check if the user wants to run the interactive formatter demo
-if (args.Length > 0 && args[0].Equals("interactive", StringComparison.OrdinalIgnoreCase))
+if (args.Length == 0 || !args[0].Equals("test", StringComparison.OrdinalIgnoreCase))
 {
-    return await FormatterDemoProgram.RunAsync().ConfigureAwait(false);
+	return await FormatterDemoProgram.RunAsync().ConfigureAwait(false);
 }
 
 // Create a service collection for DI

@@ -24,4 +24,9 @@ public class SpectreConsoleLogOptions
 	/// If not specified, uses <see cref="AnsiConsole.Console"/>.
 	/// </summary>
 	public IAnsiConsole? Writer { get; set; }
+
+	/// <summary>
+	/// A boolean that indicates whether to add a newline after each log entry.
+	/// </summary>
+	public bool NewLine { get; set; }
 }

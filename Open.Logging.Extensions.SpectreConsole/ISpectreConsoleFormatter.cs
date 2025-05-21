@@ -26,5 +26,6 @@ public interface ISpectreConsoleFormatter<TFormatter> : ISpectreConsoleFormatter
 	public static abstract TFormatter Create(
 		SpectreConsoleLogTheme? theme = null,
 		LogLevelLabels? labels = null,
+		bool newLine = false,
 		IAnsiConsole? writer = null);
 }

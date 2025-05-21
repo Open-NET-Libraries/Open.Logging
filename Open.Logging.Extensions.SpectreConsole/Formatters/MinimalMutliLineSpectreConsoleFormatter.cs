@@ -1,52 +1,53 @@
-﻿using Spectre.Console;
+using Spectre.Console;
 
 namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
+/// <summary>
+/// A formatter that outputs log entries in the style of Microsoft's default console logger with Spectre.Console styling.
+/// </summary>
 /// <inheritdoc />
-public sealed class SimpleSpectreConsoleFormatter(
+public sealed class MinimalMutliLineSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
 	bool newLine = false,
 	IAnsiConsole? writer = null)
 	: SpectreConsoleFormatterBase(theme, labels, newLine, writer)
-	, ISpectreConsoleFormatter<SimpleSpectreConsoleFormatter>
+	, ISpectreConsoleFormatter<MinimalMutliLineSpectreConsoleFormatter>
 {
 	/// <inheritdoc />
-	public static SimpleSpectreConsoleFormatter Create(
+	public static MinimalMutliLineSpectreConsoleFormatter Create(
 		SpectreConsoleLogTheme? theme = null,
 		LogLevelLabels? labels = null,
 		bool newLine = false,
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, newLine, writer);
 
+	// Add the exception details if they exist.
+	private static readonly Rule HR = new() { Style = Color.Grey };
+
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
-		// Timestamp/
+		if (!NewLine)
+			Writer.Write(HR);
+
+		var timestamp = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+		Writer.Write(new Text(timestamp, Theme.Timestamp));
+
 		var elapsedSeconds = entry.Elapsed.TotalSeconds;
-		Writer.Write(new Text($"{elapsedSeconds:000.000}s", Theme.Timestamp));
+		Writer.Write(new Text($" ({elapsedSeconds:0.000}s)", Theme.Timestamp));
 
-		// Level
-		Writer.Write(" [");
-		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
-		Writer.Write("]"); // Brackets [xxxx] are easier to search for in logs.
-
-		// Add the potential category name.
 		if (!string.IsNullOrWhiteSpace(entry.Category))
 		{
 			Writer.Write(" ");
 			Writer.WriteStyled(entry.Category, Theme.Category, true);
 		}
 
-		// Add the separator between the category and the scope.
-		Writer.Write(":");
-
 		// Add the scope information if it exists.
 		if (entry.Scopes.Count > 0)
 		{
 			var style = Theme.Scopes;
-			Writer.Write(" ");
-			Writer.WriteStyled("(", style);
+			Writer.Write(" => ");
 			for (var i = 0; i < entry.Scopes.Count; i++)
 			{
 				if (i > 0)
@@ -54,24 +55,22 @@ public sealed class SimpleSpectreConsoleFormatter(
 
 				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
 			}
-
-			Writer.WriteStyled(")", style);
 		}
 
-		// Add the message text.
+		Writer.WriteLine();
+		Writer.Write("[");
+		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
+		Writer.Write("]");
+
 		if (!string.IsNullOrWhiteSpace(entry.Message))
 		{
 			Writer.Write(" ");
 			Writer.WriteStyled(entry.Message, Theme.Message);
+			Writer.WriteLine();
 		}
-
-		Writer.WriteLine();
 
 		if (entry.Exception is not null)
 		{
-			// Add the exception details if they exist.
-			var rule = new Rule() { Style = Color.Grey };
-			Writer.Write(rule);
 			try
 			{
 				Writer.WriteException(entry.Exception);
@@ -84,8 +83,6 @@ public sealed class SimpleSpectreConsoleFormatter(
 				if (!string.IsNullOrWhiteSpace(st))
 					Writer.WriteLine(st);
 			}
-
-			Writer.Write(rule);
 		}
 
 		if (NewLine)

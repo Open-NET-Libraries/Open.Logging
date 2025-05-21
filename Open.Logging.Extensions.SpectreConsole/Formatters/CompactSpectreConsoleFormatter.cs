@@ -6,22 +6,22 @@ namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 /// <summary>
 /// A compact formatter that outputs log entries in a single line with minimal decoration.
 /// </summary>
-/// <param name="theme">The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.</param>
-/// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Defaults.LevelLabels"/>.</param>
-/// <param name="writer">The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.</param>
+/// <inheritdoc />
 public sealed class CompactSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
+	bool newLine = false,
 	IAnsiConsole? writer = null)
-	: SpectreConsoleFormatterBase(theme, labels, writer)
+	: SpectreConsoleFormatterBase(theme, labels, newLine, writer)
 	, ISpectreConsoleFormatter<CompactSpectreConsoleFormatter>
 {
 	/// <inheritdoc />
 	public static CompactSpectreConsoleFormatter Create(
 		SpectreConsoleLogTheme? theme = null,
 		LogLevelLabels? labels = null,
+		bool newLine = false,
 		IAnsiConsole? writer = null)
-		=> new(theme, labels, writer);
+		=> new(theme, labels, newLine, writer);
 
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)

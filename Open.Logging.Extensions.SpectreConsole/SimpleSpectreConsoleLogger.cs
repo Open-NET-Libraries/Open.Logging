@@ -12,6 +12,7 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// <param name="timestamp">The optional timestamp to use for log entries. Defaults to current time.</param>
 /// <param name="labels">The optional custom labels for log levels. Defaults to <see cref="Defaults.LevelLabels"/>.</param>
 /// <param name="theme">The optional custom theme for console output. Defaults to <see cref="SpectreConsoleLogTheme.Default"/>.</param>
+/// <param name="newLine">A boolean that indicates whether to add a newline after each log entry.</param>
 /// <param name="console">The optional <see cref="IAnsiConsole"/> instance to use for writing output. Defaults to <see cref="AnsiConsole.Console"/>.</param>
 /// <param name="scoped">Whether to enable log scopes. Defaults to <see langword="true"/>.</param>
 public class SimpleSpectreConsoleLogger(
@@ -20,12 +21,13 @@ public class SimpleSpectreConsoleLogger(
 	DateTimeOffset? timestamp = null,
 	LogLevelLabels? labels = null,
 	SpectreConsoleLogTheme? theme = null,
+	bool newLine = false,
 	IAnsiConsole? console = null,
 	bool scoped = true)
 	: ScopedLoggerBase(level, category, timestamp ?? DateTimeOffset.Now, scoped ? new LoggerExternalScopeProvider() : null)
 {
 	private readonly SimpleSpectreConsoleFormatter formatter
-		= new(theme, labels, console);
+		= new(theme, labels, newLine, console);
 
 	/// <inheritdoc />
 	protected override void WriteLog(PreparedLogEntry entry)

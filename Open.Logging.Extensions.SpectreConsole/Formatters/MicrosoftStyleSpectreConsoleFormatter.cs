@@ -6,27 +6,27 @@ namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 /// <summary>
 /// A formatter that outputs log entries in the style of Microsoft's default console logger with Spectre.Console styling.
 /// </summary>
-/// <param name="theme">The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.</param>
-/// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Defaults.LevelLabels"/>.</param>
-/// <param name="writer">The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.</param>
+/// <inheritdoc />
 public sealed class MicrosoftStyleSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
+	bool newLine = false,
 	IAnsiConsole? writer = null)
-	: SpectreConsoleFormatterBase(theme, labels, writer)
+	: SpectreConsoleFormatterBase(theme, labels, newLine, writer)
 	, ISpectreConsoleFormatter<MicrosoftStyleSpectreConsoleFormatter>
 {
 	/// <inheritdoc />
 	public static MicrosoftStyleSpectreConsoleFormatter Create(
 		SpectreConsoleLogTheme? theme = null,
 		LogLevelLabels? labels = null,
+		bool newLine = false,
 		IAnsiConsole? writer = null)
-		=> new(theme, labels, writer);
+		=> new(theme, labels, newLine, writer);
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
 		// Format timestamp as full DateTime similar to Microsoft default
-		var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
+		var timestamp = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
 
 		// First line: timestamp and log level
 		Writer.Write(new Text(timestamp, Theme.Timestamp));
@@ -63,20 +63,19 @@ public sealed class MicrosoftStyleSpectreConsoleFormatter(
 			Writer.WriteLine();
 		}
 
-		// Add empty line after each log entry for better readability
-		Writer.WriteLine();
-
-		if (entry.Exception is null)
-			return;
-
-		// Exception details in a highlighted box
-		var panel = new Panel(new ExceptionDisplay(entry.Exception))
+		if (entry.Exception is not null)
 		{
-			Border = BoxBorder.Rounded,
-			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error)
-		};
+			// Exception details in a highlighted box
+			var panel = new Panel(new ExceptionDisplay(entry.Exception))
+			{
+				Border = BoxBorder.Rounded,
+				BorderStyle = Theme.GetStyleForLevel(LogLevel.Error)
+			};
 
-		Writer.Write(panel);
-		Writer.WriteLine();
+			Writer.Write(panel);
+		}
+
+		if (NewLine)
+			Writer.WriteLine();
 	}
 }
