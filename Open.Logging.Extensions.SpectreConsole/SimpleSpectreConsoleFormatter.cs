@@ -68,12 +68,21 @@ public sealed class SimpleSpectreConsoleFormatter(
 			_writer.Write(" ");
 			_writer.WriteStyled(entry.Message, _theme.Message);
 		}
-
 		// Add the exception details if they exist.
 		if (entry.Exception is not null)
 		{
 			_writer.Write(Environment.NewLine);
-			_writer.WriteException(entry.Exception);
+			try
+			{
+				_writer.WriteException(entry.Exception);
+			}
+			catch (Exception ex)
+			{
+				// Fallback if WriteException fails
+				_writer.Write($"Exception: {entry.Exception.Message}");
+				_writer.Write(Environment.NewLine);
+				_writer.Write($"Stack Trace: {entry.Exception.StackTrace}");
+			}
 		}
 	}
 

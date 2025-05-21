@@ -1,27 +1,55 @@
 <Project>
-  <!-- Common properties that apply to all projects -->
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
+	<!-- Common properties for all projects in the solution -->
+	<PropertyGroup>
+		<LangVersion>preview</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<TargetFrameworks>net9.0</TargetFrameworks>
+		<Authors>electricessence (Oren F.)</Authors>
+		<Company>Open-NET-Libraries</Company>
+		<Copyright>© electricessence (Oren F.) All rights reserved.</Copyright>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<RepositoryType>git</RepositoryType>
+		<RepositoryUrl>https://github.com/Open-NET-Libraries/Open.Logging</RepositoryUrl>
+		<PackageIcon>logo.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<Deterministic>true</Deterministic>
+		<NoWarn>$(NoWarn);CA1303;CA1513;</NoWarn>
+	</PropertyGroup>
 
-  <!-- Sourcelink configuration -->
-  <PropertyGroup>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  </PropertyGroup>
+	<!-- Common package references for all projects -->
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4" />
+	</ItemGroup>
 
-  <!-- Analyzer configuration -->
-  <PropertyGroup>
-    <AnalysisLevel>latest</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <!-- Start with warnings only, then gradually enable TreatWarningsAsErrors -->
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors>NU1603</WarningsAsErrors>
-  </PropertyGroup>
+	<ItemGroup Condition="'$(TargetFramework)' != 'net9.0'">
+		<PackageReference Include="System.Collections.Immutable" Version="9.0.4" />
+	</ItemGroup>
+
+	<!-- Disable the nullable warnings when compiling for .NET Standard 2.0 -->
+	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+		<NoWarn>$(NoWarn);nullable</NoWarn>
+	</PropertyGroup>
+
+	<!-- Common analyzer settings -->
+	<PropertyGroup>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisLevel>latest</AnalysisLevel>
+		<AnalysisMode>All</AnalysisMode>
+		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+		<CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<!-- Common items to include in the package -->
+	<ItemGroup>
+		<None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+		<None Include="$(MSBuildThisFileDirectory)logo.png" Pack="true" PackagePath="\" Visible="false" Condition="Exists('$(MSBuildThisFileDirectory)\logo.png')" />
+	</ItemGroup>
 
 </Project>
