@@ -7,16 +7,12 @@ A lightweight integration between Microsoft's logging infrastructure and [Spectr
 This library bridges the gap between the standard Microsoft.Extensions.Logging framework and Spectre.Console's rich styling capabilities, making it easy to use Spectre.Console as a logging target in your .NET applications.
 
 ## Installation
-
-```sh
 dotnet add package Open.Logging.Extensions.SpectreConsole
-```
-
 ## Basic Usage
 
 Add the Spectre Console logger to your dependency injection container:
 
-```csharp
+```cs
 using Microsoft.Extensions.Logging;
 using Open.Logging.Extensions.SpectreConsole;
 
@@ -31,7 +27,7 @@ services.AddLogging(builder =>
 
 Use the logger as you would any standard ILogger:
 
-```csharp
+```cs
 public class WeatherService
 {
     private readonly ILogger<WeatherService> _logger;
@@ -66,37 +62,70 @@ public class WeatherService
 
 ## Customization
 
-### Theme
+### Built-in Themes
 
-Spectre.Console provides beautiful styling out of the box. If needed, you can customize colors and formatting:
+The library comes with several pre-configured themes inspired by popular coding editors that you can use immediately:
 
-```csharp
+```cs
+// In your Startup.cs or Program.cs
+services.AddLogging(builder =>
+{
+    builder.AddSimpleSpectreConsole(options =>
+    {
+        // Choose one of the built-in themes:
+        options.Theme
+            = SpectreConsoleLogTheme.TweakedDefaults;
+    });
+});
+```
+
+Available themes:
+
+- **Default**: Uses standard console colors for compatibility with all terminal types
+- **ModernColors**: Vibrant colors for modern terminals with rich color support
+- **TweakedDefaults**: Enhanced default theme with improved contrast and readability
+- **LightBackground**: Colors optimized for light background terminals
+- **Dracula**: Inspired by the popular Dracula code editor theme
+- **Monokai**: Inspired by the Monokai code editor theme
+- **SolarizedDark**: Inspired by the Solarized Dark theme
+- **OneDark**: Inspired by VS Code's One Dark Pro theme
+
+### Custom Theme
+
+If you prefer, you can create your own theme by customizing colors and formatting:
+```cs
 var customTheme = new SpectreConsoleLogTheme
 {
     // Styles for log levels
-    Information = new Style(foreground: Color.Cyan),
-    Warning = new Style(foreground: Color.Yellow),
-    Error = new Style(foreground: Color.Red),
+    Trace = new Style(Color.Silver, decoration: Decoration.Dim),
+    Debug = new Style(Color.Blue, decoration: Decoration.Dim),
+    Information = Color.Green,
+    Warning = new Style(Color.Yellow, decoration: Decoration.Bold),
+    Error = new Style(Color.Red, decoration: Decoration.Bold),
+    Critical = new Style(Color.White, Color.Red, Decoration.Bold),
     
     // Styles for components
-    Timestamp = new Style(foreground: Color.Grey),
-    Category = new Style(foreground: Color.Grey, decoration: Decoration.Italic),
-    Message = Style.Plain
+    Timestamp = new Style(Color.Grey, decoration: Decoration.Dim),
+    Category = new Style(Color.Grey, decoration: Decoration.Italic),
+    Scopes = new Style(Color.Blue, decoration: Decoration.Dim),
+    Message = Color.Silver,
+    Exception = Color.Red
 };
 
 // Apply the custom theme
 services.AddLogging(builder =>
 {
-    var logger = new SimpleSpectreConsoleLogger(theme: customTheme);
-    builder.AddProvider(new SimpleSpectreConsoleLoggerProvider(logger));
+    builder.AddSimpleSpectreConsole(options =>
+    {
+        options.Theme = customTheme;
+    });
 });
 ```
 
 ### Log Level Labels
 
 You can also customize the text displayed for different log levels:
-
-```csharp
+```cs
 var customLabels = new LogLevelLabels
 {
     Trace = "TRACE",
@@ -110,48 +139,39 @@ var customLabels = new LogLevelLabels
 // Apply custom labels
 services.AddLogging(builder =>
 {
-    var logger = new SimpleSpectreConsoleLogger(labels: customLabels);
-    builder.AddProvider(new SimpleSpectreConsoleLoggerProvider(logger));
+    builder.AddSimpleSpectreConsole(options =>
+    {
+        options.Labels = customLabels;
+    });
 });
+
 ```
 
-### Buffered Logging
+### Combined Configuration
 
-For high-throughput applications:
-
-```csharp
-using Open.Logging.Extensions;
-
-// Get logger from DI
-ILogger logger = serviceProvider.GetRequiredService<ILogger<MyService>>();
-
-// Create buffered logger
-BufferedLogger bufferedLogger = logger.AsBuffered();
-
-// Use with await using for automatic flushing
-await using (bufferedLogger)
+You can combine theme and label customization in a single configuration:
+```cs
+services.AddLogging(builder =>
 {
-    bufferedLogger.LogInformation("This will be buffered");
-}
+    builder.AddSimpleSpectreConsole(options =>
+    {
+        options.Theme = SpectreConsoleLogTheme.Dracula;
+        options.Labels = new LogLevelLabels
+        {
+            Trace = "trace",
+            Debug = "debug",
+            Information = "info-",
+            Warning = "warn!",
+            Error = "ERROR",
+            Critical = "FATAL"
+        };
+    });
+});
 ```
 
 ## Styling Reference
 
 This integration leverages Spectre.Console's excellent styling system. You can use any style supported by Spectre.Console:
-
-```csharp
-// Simple color names
-Error = "red"
-
-// With decorations
-Warning = "bold yellow"
-
-// With background
-Critical = "white on red"
-
-// Using Style constructor
-Debug = new Style(Color.Blue, Color.Default, Decoration.Dim)
-```
 
 For a complete style reference, see the [Spectre.Console documentation](https://spectreconsole.net/markup).
 

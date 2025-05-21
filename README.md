@@ -33,7 +33,7 @@ using Open.Logging.Extensions.SpectreConsole;
 // Add to your service collection
 services.AddLogging(builder =>
 {
-    builder.AddSpectreConsole();
+    builder.AddSimpleSpectreConsole();
 });
 
 // Inject and use
@@ -66,7 +66,7 @@ var customLabels = new LogLevelLabels
 
 services.AddLogging(builder =>
 {
-    builder.AddSpectreConsole(options =>
+    builder.AddSimpleSpectreConsole(options =>
     {
         options.Labels = customLabels;
     });
@@ -90,6 +90,25 @@ services.AddLogging(builder =>
 });
 ```
 
+### Buffered Logging
+
+For high-throughput applications:
+```cs
+using Open.Logging.Extensions;
+
+// Get logger from DI
+ILogger logger = serviceProvider.GetRequiredService<ILogger<MyService>>();
+
+// Create buffered logger
+BufferedLogger bufferedLogger = logger.AsBuffered();
+
+// Use with await using for automatic flushing
+await using (bufferedLogger)
+{
+    bufferedLogger.LogInformation("This will be buffered");
+}
+```
+
 ## Requirements
 
 These may expand in the future.  If anyone needs legacy support, please fill out an request in the repo on GitHub.
@@ -99,4 +118,4 @@ These may expand in the future.  If anyone needs legacy support, please fill out
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE).
+MIT License - see the LICENSE file for details.
