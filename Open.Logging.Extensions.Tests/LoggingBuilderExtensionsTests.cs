@@ -31,8 +31,8 @@ public class LoggingBuilderExtensionsTests
 
 		// Assert - Verify that Configure was called on the service collection
 		// Check if any service descriptor was added that configures options
-		var configurationDescriptor = testServiceCollection.FirstOrDefault(sd =>
-			sd.ServiceType.FullName?.Contains("IConfigureOptions") == true);
+		var configurationDescriptor = testServiceCollection.FirstOrDefault(static sd =>
+			sd.ServiceType.FullName?.Contains("IConfigureOptions", StringComparison.Ordinal) == true);
 
 		Assert.NotNull(configurationDescriptor);
 	}
@@ -62,7 +62,7 @@ public class LoggingBuilderExtensionsTests
 		var exception = Assert.Throws<ArgumentException>(() =>
 			loggingBuilder.AddSpecializedConsoleFormatter("", handler));
 
-		Assert.Contains("Formatter name must be provided", exception.Message);
+		Assert.Contains("Formatter name must be provided", exception.Message, StringComparison.Ordinal);
 	}
 
 	[Fact]
