@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Spectre.Console;
 
 namespace Open.Logging.Extensions.Demo;
 
@@ -18,13 +17,6 @@ internal sealed class LoggingDemoService(ILogger<LoggingDemoService> logger)
 	/// <returns>A task representing the asynchronous operation.</returns>
 	public async Task RunAsync()
 	{
-		var rule = new Rule("[bold]Open.Logging.Extensions.SpectreConsole Demo[/]")
-		{
-			Style = Style.Parse("blue")
-		};
-		AnsiConsole.Write(rule);
-		AnsiConsole.WriteLine();
-
 		// Log at each log level
 		logger.LogTrace("This is a Trace level log message");
 		logger.LogDebug("This is a Debug level log message");
@@ -59,11 +51,5 @@ internal sealed class LoggingDemoService(ILogger<LoggingDemoService> logger)
 		await Task.Delay(100).ConfigureAwait(false);
 		logger.LogInformation("This is a log message after an async operation");
 
-		AnsiConsole.WriteLine();
-		var endRule = new Rule("[bold]Demo Complete[/]")
-		{
-			Style = Style.Parse("blue")
-		};
-		AnsiConsole.Write(endRule);
 	}
 }
