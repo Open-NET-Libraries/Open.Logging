@@ -24,65 +24,71 @@ public sealed class CompactSpectreConsoleFormatter(
 		=> new(theme, labels, newLine, writer);
 
 	/// <inheritdoc />
+	protected override void WriteLevel(LogLevel level, Placement whiteSpace = Placement.None)
+	{
+		string levelIcon = GetLogLevelIcon(level);
+		Write(levelIcon, Theme.GetStyleForLevel(level));
+		Write(" ");
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteCategory(string? category, Placement whiteSpace = Placement.None)
+	{
+		if (string.IsNullOrWhiteSpace(category))
+			return false;
+
+		string shortCategory = GetShortCategoryName(category);
+		Write(shortCategory, Theme.Category, true);
+		Write(" ");
+		return true;
+	}
+
+	/// <summary>
+	/// Writes all scopes to the console.
+	/// </summary>
+	private bool WriteScopes(IReadOnlyList<object> scopes)
+	{
+		if (scopes.Count <= 0)
+			return false;
+
+		Write(" ");
+		var style = Theme.Scopes;
+		Write("(", style);
+
+		for (var i = 0; i < scopes.Count; i++)
+		{
+			if (i > 0)
+				Write("→", style);
+
+			Write(scopes[i].ToString(), style);
+		}
+
+		Write(")", style);
+		return true;
+	}
+
+	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
 		// Write log level as colored icon
-		string levelIcon = GetLogLevelIcon(entry.Level);
-		Writer.Write(new Text(levelIcon, Theme.GetStyleForLevel(entry.Level)));
-		Writer.Write(" ");
+		WriteLevel(entry.Level);
 
 		// Category (short form)
-		if (!string.IsNullOrWhiteSpace(entry.Category))
-		{
-			string shortCategory = GetShortCategoryName(entry.Category);
-			Writer.WriteStyled(shortCategory, Theme.Category, true);
-			Writer.Write(" ");
-		}
+		WriteCategory(entry.Category);
 
 		// Message
-		if (!string.IsNullOrWhiteSpace(entry.Message))
-			Writer.WriteStyled(entry.Message, Theme.Message);
+		WriteMessage(entry.Message);
 
 		// Scopes (if any)
-		if (entry.Scopes.Count > 0)
-		{
-			Writer.Write(" ");
-			var style = Theme.Scopes;
-			Writer.WriteStyled("(", style);
-
-			for (var i = 0; i < entry.Scopes.Count; i++)
-			{
-				if (i > 0)
-					Writer.WriteStyled("→", style);
-
-				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
-			}
-
-			Writer.WriteStyled(")", style);
-		}
+		WriteScopes(entry.Scopes);
 
 		Writer.WriteLine();
 
 		// Exception handling
-		if (entry.Exception is not null)
-		{
-			var rule = new Rule() { Style = Style.Parse("dim") };
-			Writer.Write(rule);
+		WriteException(entry.Exception, hrs: Placement.Both);
 
-			try
-			{
-				Writer.WriteException(entry.Exception);
-			}
-			catch
-			{
-				Writer.WriteLine($"Exception: {entry.Exception.Message}");
-				var st = entry.Exception.StackTrace;
-				if (!string.IsNullOrWhiteSpace(st))
-					Writer.WriteLine(st);
-			}
-
-			Writer.Write(rule);
-		}
+		if (NewLine)
+			Writer.WriteLine();
 	}
 
 	private static string GetLogLevelIcon(LogLevel level) => level switch

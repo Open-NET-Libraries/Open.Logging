@@ -22,60 +22,94 @@ public sealed class MicrosoftStyleSpectreConsoleFormatter(
 		bool newLine = false,
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, newLine, writer);
+
+	private void WriteIndent()
+		=> Write("    ");
+
+	/// <inheritdoc />
+	protected override void WriteTimestamp(DateTimeOffset timestamp, string format = "yyyy-MM-dd HH:mm:ss.fff")
+	{
+		base.WriteTimestamp(timestamp, format);
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteCategory(string? category, Placement whiteSpace = Placement.None)
+	{
+		if (string.IsNullOrWhiteSpace(category))
+			return false;
+
+		WriteIndent();
+		return base.WriteCategory(category);
+	}
+
+	/// <summary>
+	/// Writes all scopes to the console.
+	/// </summary>
+	private bool WriteScopes(IReadOnlyList<object> scopes)
+	{
+		if (scopes.Count <= 0)
+			return false;
+
+		var style = Theme.Scopes;
+		Write(" => ");
+		for (var i = 0; i < scopes.Count; i++)
+		{
+			if (i > 0)
+				Write(" > ", style);
+
+			Write(scopes[i].ToString(), style);
+		}
+
+		return true;
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteMessage(string? message, bool trim = false, Placement whiteSpace = Placement.None)
+	{
+		if (string.IsNullOrWhiteSpace(message))
+			return false;
+
+		WriteIndent();
+		return base.WriteMessage(message, trim);
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteException(Exception? exception)
+	{
+		if (exception is null)
+			return false;
+
+		// Exception details in a highlighted box
+		var panel = new Panel(new ExceptionDisplay(exception))
+		{
+			Border = BoxBorder.Rounded,
+			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error)
+		};
+
+		Write(panel);
+		return true;
+	}
+
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
-		// Format timestamp as full DateTime similar to Microsoft default
-		var timestamp = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
-
 		// First line: timestamp and log level
-		Writer.Write(new Text(timestamp, Theme.Timestamp));
-		Writer.Write(" ");
-		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
-		Writer.WriteLine();
+		WriteTimestamp(entry.Timestamp);
+		WriteLevel(entry.Level, whiteSpace: Placement.Before);
+		WriteLine();
 
 		// Second line: category with optional scope
-		Writer.Write("      ");
-		if (!string.IsNullOrWhiteSpace(entry.Category))
-			Writer.WriteStyled(entry.Category, Theme.Category, true);
-
-		// Add the scope information if it exists.
-		if (entry.Scopes.Count > 0)
-		{
-			var style = Theme.Scopes;
-			Writer.Write(" => ");
-			for (var i = 0; i < entry.Scopes.Count; i++)
-			{
-				if (i > 0)
-					Writer.WriteStyled(" > ", style);
-
-				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
-			}
-		}
-
-		Writer.WriteLine();
+		WriteCategory(entry.Category);
+		WriteScopes(entry.Scopes);
+		WriteLine();
 
 		// Third line: message
-		if (!string.IsNullOrWhiteSpace(entry.Message))
-		{
-			Writer.Write("      ");
-			Writer.WriteStyled(entry.Message, Theme.Message);
-			Writer.WriteLine();
-		}
+		WriteMessage(entry.Message);
+		WriteLine();
 
-		if (entry.Exception is not null)
-		{
-			// Exception details in a highlighted box
-			var panel = new Panel(new ExceptionDisplay(entry.Exception))
-			{
-				Border = BoxBorder.Rounded,
-				BorderStyle = Theme.GetStyleForLevel(LogLevel.Error)
-			};
+		// Exception if present
+		WriteException(entry.Exception);
 
-			Writer.Write(panel);
-		}
-
-		if (NewLine)
-			Writer.WriteLine();
+		if (NewLine) WriteLine();
 	}
 }

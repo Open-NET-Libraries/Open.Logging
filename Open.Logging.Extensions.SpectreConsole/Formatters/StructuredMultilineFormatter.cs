@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Spectre.Console;
 using System.Globalization;
 
@@ -24,87 +25,107 @@ public sealed class StructuredMultilineFormatter(
 		=> new(theme, labels, newLine, writer);
 
 	/// <inheritdoc />
+	protected override void WriteTimestamp(DateTimeOffset timestamp, string format = "HH:mm:ss.fff")
+	{
+		var text = timestamp.ToString(format, CultureInfo.InvariantCulture);
+		Write(text, Theme.Timestamp);
+	}
+
+	/// <inheritdoc />
+	protected override void WriteLevel(LogLevel level, Placement whiteSpace = Placement.None)
+	{
+		Write(" - ");
+		Write(Labels.GetLabelForLevel(level), Theme.GetStyleForLevel(level));
+	}
+
+	/// <summary>
+	/// Creates a header rule with timestamp and log level.
+	/// </summary>
+	private Rule CreateHeader(DateTimeOffset timestamp, LogLevel level)
+	{
+		// Simple string concatenation for the header
+		var headerText = $"{timestamp.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture)} - [[{Labels.GetLabelForLevel(level)}]]";
+
+		var header = new Rule(headerText)
+		{
+			Style = Theme.GetStyleForLevel(level)
+		};
+
+		header.LeftJustified();
+		return header;
+	}
+
+	private static readonly Style LabelStyle = Style.Parse("dim italic");
+
+	private void WriteRow(string label, string value, Style style)
+	{
+		Write(new string(' ', 8 - label.Length));
+		Write(label, LabelStyle);
+		Write(": ");
+		WriteLine(value, style);
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteException(Exception? exception)
+	{
+		if (exception is null)
+			return false;
+
+		var exceptionPanel = new Panel(new ExceptionDisplay(exception))
+		{
+			Header = new PanelHeader("Exception"),
+			Border = BoxBorder.Rounded,
+			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error),
+			Expand = true,
+			Padding = new Padding(1, 0, 1, 0)
+		};
+
+		Write(exceptionPanel);
+		return true;
+	}
+
+	private static readonly Rule DimHR = new()
+	{
+		Style = Style.Parse("dim")
+	};
+
+	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
 		var levelStyle = Theme.GetStyleForLevel(entry.Level);
-		// Create a layout with columns
-		var grid = new Grid();
-		grid.AddColumn(new GridColumn().Width(15).NoWrap()); // Labels column
-		grid.AddColumn(new GridColumn().Width(65).LeftAligned()); // Content column
 
-		// Add a header row with timestamp and log level
-		var timestamp = DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
-		var levelTextDisplay = Theme.GetTextForLevel(entry.Level, Labels);
+		// Create and render a header with timestamp and log level
+		var header = CreateHeader(entry.Timestamp, entry.Level);
+		Write(header);
 
-		// Create a rule with escaped text to avoid Markup interpretation
-		var headerText = $"{timestamp} - {Labels.GetLabelForLevel(entry.Level)}";
-		var header = new Rule(headerText)
+		// Create and render a grid with details
+		if (!string.IsNullOrWhiteSpace(entry.Category))
 		{
-			Style = levelStyle
-		};
-		header.LeftJustified();
-
-		Writer.Write(header);
-		Writer.WriteLine();
-
-		// Source/Category
-		grid.AddRow(
-			new Text("Category:", Style.Parse("dim italic")),
-			new Text(!string.IsNullOrWhiteSpace(entry.Category) ? entry.Category : "-", Theme.Category)
-		);
+			WriteRow("Category", entry.Category, Theme.Category);
+		}
 
 		// Scopes
 		if (entry.Scopes.Count > 0)
 		{
 			var scopesText = string.Join(" → ", entry.Scopes);
-			grid.AddRow(
-				new Text("Scopes:", Style.Parse("dim italic")),
-				new Text(scopesText, Theme.Scopes)
-			);
+			WriteRow("Scopes", scopesText, Theme.Scopes);
 		}
 
 		// Message
 		if (!string.IsNullOrWhiteSpace(entry.Message))
 		{
-			grid.AddRow(
-				new Text("Message:", Style.Parse("dim italic")),
-				new Text(entry.Message, Theme.Message)
-			);
+			WriteRow("Message", entry.Message, Theme.Message);
 		}
 
 		// Elapsed
 		var elapsedSeconds = entry.Elapsed.TotalSeconds;
-		grid.AddRow(
-			new Text("Elapsed:", Style.Parse("dim italic")),
-			new Text($"{elapsedSeconds:0.000}s", Theme.Timestamp)
-		);
-
-		// Render the grid
-		Writer.Write(grid);
-		Writer.WriteLine();
+		WriteRow("Elapsed", $"{elapsedSeconds:0.000}s", Theme.Timestamp);
 
 		// Exception
-		if (entry.Exception is not null)
-		{
-			var exceptionPanel = new Panel(new ExceptionDisplay(entry.Exception))
-			{
-				Header = new PanelHeader("Exception"),
-				Border = BoxBorder.Rounded,
-				BorderStyle = levelStyle,
-				Expand = true,
-				Padding = new Padding(1, 0, 1, 0)
-			};
+		WriteException(entry.Exception);
+		Write(DimHR);
 
-			Writer.Write(exceptionPanel);
-			Writer.WriteLine();
-		}
-
-		// Add a bottom separator
-		var footer = new Rule
-		{
-			Style = Style.Parse("dim")
-		};
-		Writer.Write(footer);
-		Writer.WriteLine();
+		if (NewLine)
+			WriteLine();
 	}
 }

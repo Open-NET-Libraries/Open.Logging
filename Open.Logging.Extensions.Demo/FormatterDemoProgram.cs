@@ -141,21 +141,13 @@ internal static class FormatterDemoProgram
 			// Clear default providers
 			logging.ClearProviders();
 
-			// Custom labels for consistency 
-			var labels = new LogLevelLabels
-			{
-				Information = "INFO-",
-				Warning = "WARN!",
-				Error = "ERROR",
-				Critical = "CRIT!",
-			};            // Configure the selected formatter
+			// Configure the selected formatter
 			switch (formatter)
 			{
 				case "Simple":
 					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -163,7 +155,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<MinimalMutliLineSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -171,7 +162,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<MicrosoftStyleSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -179,7 +169,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<CompactSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -187,7 +176,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<CallStackSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -195,7 +183,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<StructuredMultilineFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 
@@ -203,7 +190,6 @@ internal static class FormatterDemoProgram
 					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
 					{
 						options.Theme = theme;
-						options.Labels = labels;
 					});
 					break;
 			}

@@ -6,7 +6,7 @@ A lightweight integration between Microsoft's logging infrastructure and [Spectr
 
 ## Overview
 
-This library bridges the gap between the standard Microsoft.Extensions.Logging framework and Spectre.Console's rich styling capabilities, making it easy to use Spectre.Console as a logging target in your .NET applications.
+This library bridges the gap between the standard Microsoft.Extensions.Logging framework and Spectre.Console's rich styling capabilities, making it easy to use Spectre.Console as a logging target in your .NET applications. It provides multiple formatter options to display your logs in various styles, from simple one-line outputs to structured multi-line formats.
 
 ## Installation
 dotnet add package Open.Logging.Extensions.SpectreConsole
@@ -21,7 +21,7 @@ using Open.Logging.Extensions.SpectreConsole;
 // In your Startup.cs or Program.cs
 services.AddLogging(builder =>
 {
-    builder.AddSimpleSpectreConsole();
+    builder.AddSpectreConsole<SimpleSpectreConsoleFormatter>();
 });
 ```
 
@@ -64,6 +64,80 @@ public class WeatherService
 
 ## Customization
 
+### Available Formatters
+
+The library comes with several pre-built formatters that provide different styles of log output:
+
+- **SimpleSpectreConsoleFormatter**: A compact single-line formatter (default)
+- **MicrosoftStyleSpectreConsoleFormatter**: Multi-line format similar to Microsoft's default console logger
+- **CompactSpectreConsoleFormatter**: Space-efficient format with icons for log levels
+- **CallStackSpectreConsoleFormatter**: Structured format with visual frame indicators
+- **StructuredMultilineFormatter**: Grid-based format with clear labeling
+
+Usage example:
+
+```cs
+// Choose any of the pre-built formatters
+services.AddLogging(builder =>
+{
+    builder.AddSpectreConsole<MicrosoftStyleSpectreConsoleFormatter>();
+});
+```
+
+### Creating Your Own Formatter
+
+You can easily create your own custom formatter by implementing the `ISpectreConsoleFormatter<T>` interface:
+
+```cs
+public sealed class MyCustomFormatter(
+    SpectreConsoleLogTheme? theme = null,
+    LogLevelLabels? labels = null,
+    bool newLine = false,
+    IAnsiConsole? writer = null)
+    : SpectreConsoleFormatterBase(theme, labels, newLine, writer)
+    , ISpectreConsoleFormatter<MyCustomFormatter>
+{
+    public static MyCustomFormatter Create(
+        SpectreConsoleLogTheme? theme = null,
+        LogLevelLabels? labels = null,
+        bool newLine = false,
+        IAnsiConsole? writer = null)
+        => new(theme, labels, newLine, writer);
+        
+    public override void Write(PreparedLogEntry entry)
+    {
+        // Your custom formatting logic here
+        Writer.WriteLine($"[{entry.Level}] {entry.Message}");
+        
+        // Handle exceptions
+        if (entry.Exception is not null)
+        {
+            Writer.WriteException(entry.Exception);
+        }
+    }
+}
+```
+
+After creating your formatter, register it with the DI container:
+
+```cs
+services.AddLogging(builder =>
+{
+    builder.AddSpectreConsole<MyCustomFormatter>();
+});
+```
+
+### Interactive Demo
+
+To explore the various formatters with different themes, run the demo application with the interactive flag:
+
+```bash
+cd Open.Logging.Extensions.Demo
+dotnet run -- interactive
+```
+
+This will launch an interactive console application that allows you to select different formatters and themes to see how they look with sample log entries. It's a great way to experiment with different combinations before implementing them in your application.
+
 ### Built-in Themes
 
 The library comes with several pre-configured themes inspired by popular coding editors that you can use immediately:
@@ -72,11 +146,10 @@ The library comes with several pre-configured themes inspired by popular coding 
 // In your Startup.cs or Program.cs
 services.AddLogging(builder =>
 {
-    builder.AddSimpleSpectreConsole(options =>
+    builder.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
     {
         // Choose one of the built-in themes:
-        options.Theme
-            = SpectreConsoleLogTheme.TweakedDefaults;
+        options.Theme = SpectreConsoleLogTheme.TweakedDefaults;
     });
 });
 ```
@@ -117,7 +190,7 @@ var customTheme = new SpectreConsoleLogTheme
 // Apply the custom theme
 services.AddLogging(builder =>
 {
-    builder.AddSimpleSpectreConsole(options =>
+    builder.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
     {
         options.Theme = customTheme;
     });
@@ -141,7 +214,7 @@ var customLabels = new LogLevelLabels
 // Apply custom labels
 services.AddLogging(builder =>
 {
-    builder.AddSimpleSpectreConsole(options =>
+    builder.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
     {
         options.Labels = customLabels;
     });
@@ -155,7 +228,7 @@ You can combine theme and label customization in a single configuration:
 ```cs
 services.AddLogging(builder =>
 {
-    builder.AddSimpleSpectreConsole(options =>
+    builder.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
     {
         options.Theme = SpectreConsoleLogTheme.Dracula;
         options.Labels = new LogLevelLabels
@@ -170,6 +243,26 @@ services.AddLogging(builder =>
     });
 });
 ```
+
+### Screenshot Examples
+
+Below are examples of the different formatters in action:
+
+#### SimpleSpectreConsoleFormatter
+
+![SimpleSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/simple-formatter.png)
+
+#### MicrosoftStyleSpectreConsoleFormatter
+
+![MicrosoftStyleSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/microsoft-style-formatter.png)
+
+#### CallStackSpectreConsoleFormatter
+
+![CallStackSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/callstack-formatter.png)
+
+#### StructuredMultilineFormatter
+
+![StructuredMultilineFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/structured-multiline-formatter.png)
 
 ## Styling Reference
 

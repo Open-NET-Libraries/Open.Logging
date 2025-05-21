@@ -1,9 +1,10 @@
-﻿using Spectre.Console;
+﻿using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
 /// <inheritdoc />
-public sealed class SimpleSpectreConsoleFormatter(
+public class SimpleSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
 	bool newLine = false,
@@ -20,75 +21,54 @@ public sealed class SimpleSpectreConsoleFormatter(
 		=> new(theme, labels, newLine, writer);
 
 	/// <inheritdoc />
+	protected override void WriteLevel(LogLevel level, Placement whiteSpace = Placement.None)
+	{
+		if (whiteSpace.HasFlag(Placement.Before)) Write(" ");
+		Write("[");
+		base.WriteLevel(level);
+		Write("]"); // Brackets [xxxx] are easier to search for in logs.
+		if (whiteSpace.HasFlag(Placement.Before)) Write(" ");
+	}
+
+	/// <inheritdoc />
+	private bool WriteScopes(IReadOnlyList<object> scopes)
+	{
+		// Add the scope information if it exists.
+		if (!(scopes?.Count > 0))
+		{
+			return false;
+		}
+
+		var style = Theme.Scopes;
+		Write(" ");
+		Write("(", style);
+		for (var i = 0; i < scopes.Count; i++)
+		{
+			if (i > 0)
+				Write(" > ", style);
+
+			Write(scopes[i].ToString(), style);
+		}
+
+		Write(")", style);
+		return true;
+	}
+
+	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
-		// Timestamp/
-		var elapsedSeconds = entry.Elapsed.TotalSeconds;
-		Writer.Write(new Text($"{elapsedSeconds:000.000}s", Theme.Timestamp));
-
-		// Level
-		Writer.Write(" [");
-		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
-		Writer.Write("]"); // Brackets [xxxx] are easier to search for in logs.
-
-		// Add the potential category name.
-		if (!string.IsNullOrWhiteSpace(entry.Category))
-		{
-			Writer.Write(" ");
-			Writer.WriteStyled(entry.Category, Theme.Category, true);
-		}
-
+		WriteElapsed(entry.Elapsed);
+		WriteLevel(entry.Level, whiteSpace: Placement.Before);
+		WriteCategory(entry.Category, whiteSpace: Placement.Before);
 		// Add the separator between the category and the scope.
-		Writer.Write(":");
+		Write(":");
 
-		// Add the scope information if it exists.
-		if (entry.Scopes.Count > 0)
-		{
-			var style = Theme.Scopes;
-			Writer.Write(" ");
-			Writer.WriteStyled("(", style);
-			for (var i = 0; i < entry.Scopes.Count; i++)
-			{
-				if (i > 0)
-					Writer.WriteStyled(" > ", style);
-
-				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
-			}
-
-			Writer.WriteStyled(")", style);
-		}
-
-		// Add the message text.
-		if (!string.IsNullOrWhiteSpace(entry.Message))
-		{
-			Writer.Write(" ");
-			Writer.WriteStyled(entry.Message, Theme.Message);
-		}
+		WriteScopes(entry.Scopes);
+		WriteMessage(entry.Message, whiteSpace: Placement.Before);
 
 		Writer.WriteLine();
+		WriteException(entry.Exception, hrs: Placement.Both);
 
-		if (entry.Exception is not null)
-		{
-			// Add the exception details if they exist.
-			var rule = new Rule() { Style = Color.Grey };
-			Writer.Write(rule);
-			try
-			{
-				Writer.WriteException(entry.Exception);
-			}
-			catch
-			{
-				// Fall-back if WriteException fails.  Not likely, but not a bad idea.
-				Writer.WriteLine($"Exception: {entry.Exception.Message}");
-				var st = entry.Exception.StackTrace;
-				if (!string.IsNullOrWhiteSpace(st))
-					Writer.WriteLine(st);
-			}
-
-			Writer.Write(rule);
-		}
-
-		if (NewLine)
-			Writer.WriteLine();
+		if (NewLine) Writer.WriteLine();
 	}
 }

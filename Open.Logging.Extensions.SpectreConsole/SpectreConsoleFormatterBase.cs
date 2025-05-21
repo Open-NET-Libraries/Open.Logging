@@ -1,4 +1,6 @@
-﻿using Spectre.Console;
+﻿using Microsoft.Extensions.Logging;
+using Spectre.Console;
+using Spectre.Console.Rendering;
 
 namespace Open.Logging.Extensions.SpectreConsole;
 
@@ -36,6 +38,14 @@ public abstract class SpectreConsoleFormatterBase(
 	/// </summary>
 	protected bool NewLine { get; } = newLine;
 
+	private static readonly Rule DefaultHR
+		= new() { Style = Color.Grey };
+
+	/// <summary>
+	/// A basic horizontal rule.
+	/// </summary>
+	protected virtual Rule HR => DefaultHR;
+
 	/// <summary>
 	/// Creates a new console formatter with the specified name and timestamp.
 	/// </summary>
@@ -47,13 +57,163 @@ public abstract class SpectreConsoleFormatterBase(
 	public abstract void Write(PreparedLogEntry entry);
 
 	/// <remarks>Uses a lock on the writer to ensure only one log entry at a time.</remarks>
-	/// <inheritdoc cref="Write" />
+	/// <inheritdoc cref="Write(PreparedLogEntry)" />
 	public void WriteSynchronized(PreparedLogEntry entry)
 	{
 		// By using the injected writer, other locks can be applied to the same writer.
 		lock (Writer)
 		{
 			Write(entry);
+		}
+	}
+
+	/// <summary>
+	/// Writes any renderable object to the console.
+	/// </summary>
+	protected void Write(IRenderable renderable)
+		=> Writer.Write(renderable);
+
+	/// <summary>
+	/// Writes a string to the console with the optional style.
+	/// </summary>
+	protected virtual void Write(string? text, Style? style = null, bool trim = false)
+	{
+		if (trim ? string.IsNullOrWhiteSpace(text) : string.IsNullOrEmpty(text))
+			return;
+
+		if (trim) text = text.Trim();
+		if (style is null) Writer.Write(text);
+		else Writer.Write(new Text(text, style));
+	}
+
+	/// <summary>
+	/// Writes a line to the console with the optional style.
+	/// </summary>
+	protected virtual void WriteLine(string? text = null, Style? style = null, bool trim = false)
+	{
+		if (trim ? string.IsNullOrWhiteSpace(text) : string.IsNullOrEmpty(text))
+		{
+			Writer.WriteLine();
+			return;
+		}
+
+		if (trim) text = text.Trim();
+		if (style is null) Writer.WriteLine(text);
+		else Writer.WriteLine(text, style);
+	}
+
+	/// <summary>
+	/// Writes a timestamp to the console.
+	/// </summary>
+	protected virtual void WriteTimestamp(DateTimeOffset timestamp, string format = "yyyy-MM-dd HH:mm:ss.fff")
+	{
+		var text = timestamp.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
+
+		Write(text, Theme.Timestamp);
+	}
+
+	/// <summary>
+	/// Writes the elapsed time to the console.
+	/// </summary>
+	protected virtual void WriteElapsed(TimeSpan elapsed, string format = "000.000s")
+	{
+		var elapsedSeconds = elapsed.TotalSeconds;
+		var text = elapsedSeconds.ToString(format, System.Globalization.CultureInfo.InvariantCulture);
+
+		Write(text, Theme.Timestamp);
+	}
+
+	/// <summary>
+	/// Writes the category to the console.
+	/// </summary>
+	protected virtual void WriteLevel(LogLevel level, Placement whiteSpace = Placement.None)
+	{
+		if (whiteSpace.HasFlag(Placement.Before)) Write(" ");
+		Writer.Write(Theme.GetTextForLevel(level, Labels));
+		if (whiteSpace.HasFlag(Placement.After)) Write(" ");
+	}
+
+	/// <summary>
+	/// Writes the category to the console.
+	/// </summary>
+	protected virtual bool WriteCategory(string? category, Placement whiteSpace = Placement.None)
+	{
+		if (string.IsNullOrWhiteSpace(category))
+			return false;
+
+		if (whiteSpace.HasFlag(Placement.Before)) Write(" ");
+		Write(category, Theme.Category, true);
+		if (whiteSpace.HasFlag(Placement.After)) Write(" ");
+		return true;
+	}
+
+	/// <summary>
+	/// Writes the scope to the console.
+	/// </summary>
+	protected virtual bool WriteScope(string? scope, bool trim = false)
+	{
+		if (string.IsNullOrWhiteSpace(scope))
+			return false;
+
+		Write(scope, Theme.Scopes, trim);
+		return true;
+	}
+
+	/// <summary>
+	/// Writes the message to the console.
+	/// </summary>
+	protected virtual bool WriteMessage(string? message, bool trim = false, Placement whiteSpace = Placement.None)
+	{
+		if (string.IsNullOrWhiteSpace(message))
+			return false;
+
+		if (whiteSpace.HasFlag(Placement.Before)) Write(" ");
+		Write(message, Theme.Message, trim);
+		if (whiteSpace.HasFlag(Placement.After)) Write(" ");
+		return true;
+	}
+
+	/// <summary>
+	/// Writes the exception details to the console.
+	/// </summary>
+	protected virtual bool WriteException(Exception? exception)
+	{
+		if (exception is null) return false;
+
+		try
+		{
+			Writer.WriteException(exception);
+		}
+		catch
+		{
+			// Fall-back if WriteException fails.  Not likely, but not a bad idea.
+			Writer.WriteLine($"Exception: {exception.Message}");
+			var st = exception.StackTrace;
+			if (!string.IsNullOrWhiteSpace(st))
+				Writer.WriteLine(st);
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// Writes the exception details to the console with optional horizontal rules before and after.
+	/// </summary>
+	protected bool WriteException(Exception? exception, Placement hrs)
+	{
+		if (exception is null) return false;
+
+		if (hrs.HasFlag(Placement.Before))
+			Write(HR);
+
+		try
+		{
+			return WriteException(exception);
+		}
+		finally
+		{
+			if (hrs.HasFlag(Placement.After))
+				Write(HR);
 		}
 	}
 }

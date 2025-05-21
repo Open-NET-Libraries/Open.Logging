@@ -1,9 +1,10 @@
 using Spectre.Console;
+using System.Globalization;
 
 namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
 /// <summary>
-/// A formatter that outputs log entries in the style of Microsoft's default console logger with Spectre.Console styling.
+/// A formatter that outputs log entries in a minimal multi-line format with Spectre.Console styling.
 /// </summary>
 /// <inheritdoc />
 public sealed class MinimalMutliLineSpectreConsoleFormatter(
@@ -11,81 +12,66 @@ public sealed class MinimalMutliLineSpectreConsoleFormatter(
 	LogLevelLabels? labels = null,
 	bool newLine = false,
 	IAnsiConsole? writer = null)
-	: SpectreConsoleFormatterBase(theme, labels, newLine, writer)
+	: SimpleSpectreConsoleFormatter(theme, labels, newLine, writer)
 	, ISpectreConsoleFormatter<MinimalMutliLineSpectreConsoleFormatter>
 {
 	/// <inheritdoc />
-	public static MinimalMutliLineSpectreConsoleFormatter Create(
+	public static new MinimalMutliLineSpectreConsoleFormatter Create(
 		SpectreConsoleLogTheme? theme = null,
 		LogLevelLabels? labels = null,
 		bool newLine = false,
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, newLine, writer);
 
-	// Add the exception details if they exist.
-	private static readonly Rule HR = new() { Style = Color.Grey };
+	/// <inheritdoc />
+	protected override void WriteElapsed(TimeSpan elapsed, string format = "0.000s")
+	{
+		var elapsedSeconds = elapsed.TotalSeconds;
+		var text = $" ({elapsedSeconds.ToString(format, CultureInfo.InvariantCulture)})";
+		Write(text, Theme.Timestamp);
+	}
+
+	/// <summary>
+	/// Writes all scopes to the console.
+	/// </summary>
+	private bool WriteScopes(IReadOnlyList<object> scopes)
+	{
+		if (scopes.Count <= 0)
+			return false;
+
+		var style = Theme.Scopes;
+		Write(" => ");
+		for (var i = 0; i < scopes.Count; i++)
+		{
+			if (i > 0)
+				Write(" > ", style);
+
+			Write(scopes[i].ToString(), style);
+		}
+
+		return true;
+	}
 
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
-		if (!NewLine)
-			Writer.Write(HR);
+		if (!NewLine) Write(HR);
 
-		var timestamp = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
-		Writer.Write(new Text(timestamp, Theme.Timestamp));
+		// First line: timestamp, elapsed, category and scopes
+		WriteTimestamp(entry.Timestamp);
+		WriteElapsed(entry.Elapsed);
+		WriteCategory(entry.Category, Placement.Before);
+		WriteScopes(entry.Scopes);
+		WriteLine();
 
-		var elapsedSeconds = entry.Elapsed.TotalSeconds;
-		Writer.Write(new Text($" ({elapsedSeconds:0.000}s)", Theme.Timestamp));
+		// Second line: log level and message
+		WriteLevel(entry.Level);
+		WriteMessage(entry.Message, trim: true, whiteSpace: Placement.Before);
+		WriteLine();
 
-		if (!string.IsNullOrWhiteSpace(entry.Category))
-		{
-			Writer.Write(" ");
-			Writer.WriteStyled(entry.Category, Theme.Category, true);
-		}
+		// Exception if present
+		WriteException(entry.Exception);
 
-		// Add the scope information if it exists.
-		if (entry.Scopes.Count > 0)
-		{
-			var style = Theme.Scopes;
-			Writer.Write(" => ");
-			for (var i = 0; i < entry.Scopes.Count; i++)
-			{
-				if (i > 0)
-					Writer.WriteStyled(" > ", style);
-
-				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
-			}
-		}
-
-		Writer.WriteLine();
-		Writer.Write("[");
-		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
-		Writer.Write("]");
-
-		if (!string.IsNullOrWhiteSpace(entry.Message))
-		{
-			Writer.Write(" ");
-			Writer.WriteStyled(entry.Message, Theme.Message);
-			Writer.WriteLine();
-		}
-
-		if (entry.Exception is not null)
-		{
-			try
-			{
-				Writer.WriteException(entry.Exception);
-			}
-			catch
-			{
-				// Fall-back if WriteException fails.  Not likely, but not a bad idea.
-				Writer.WriteLine($"Exception: {entry.Exception.Message}");
-				var st = entry.Exception.StackTrace;
-				if (!string.IsNullOrWhiteSpace(st))
-					Writer.WriteLine(st);
-			}
-		}
-
-		if (NewLine)
-			Writer.WriteLine();
+		if (NewLine) WriteLine();
 	}
 }

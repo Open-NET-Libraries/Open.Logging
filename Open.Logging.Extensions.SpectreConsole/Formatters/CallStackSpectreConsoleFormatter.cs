@@ -25,6 +25,94 @@ public sealed class CallStackSpectreConsoleFormatter(
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, newLine, writer);
 
+	private static readonly Style Dim = new(decoration: Decoration.Dim);
+
+	/// <inheritdoc />
+	protected override bool WriteCategory(string? category, Placement whiteSpace = Placement.None)
+	{
+		if (!string.IsNullOrWhiteSpace(category))
+		{
+			Write("│ ");
+			Write("SOURCE:", Dim);
+			Write(" ");
+			Write(category, Theme.Category, true);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	/// <summary>
+	/// Writes all scopes to the console.
+	/// </summary>
+	private bool WriteScopes(IReadOnlyList<object> scopes)
+	{
+		if (scopes.Count <= 0)
+			return false;
+
+		Write("│ ");
+		Write("CONTEXT:", Dim);
+
+		var style = Theme.Scopes;
+		for (var i = 0; i < scopes.Count; i++)
+		{
+			Write(" ");
+			if (i > 0)
+			{
+				Write("→ ", style);
+			}
+
+			Write(scopes[i]?.ToString() ?? "<null>", style);
+		}
+
+		return true;
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteMessage(string? message, bool trim = false, Placement whiteSpace = Placement.None)
+	{
+		if (!string.IsNullOrWhiteSpace(message))
+		{
+			Write("│ ");
+			Write("MESSAGE:", Dim);
+			Write(" ");
+			Write(message, Theme.Message, trim);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	/// <inheritdoc />
+	protected override void WriteElapsed(TimeSpan elapsed, string format = "0.000s")
+	{
+		var elapsedSeconds = elapsed.TotalSeconds;
+		var text = $" Elapsed: {elapsedSeconds.ToString(format, CultureInfo.InvariantCulture)} ";
+		Write(text, Theme.Timestamp);
+	}
+
+	/// <inheritdoc />
+	protected override bool WriteException(Exception? exception)
+	{
+		if (exception is null)
+			return false;
+
+		var panel = new Panel(new ExceptionDisplay(exception))
+		{
+			Border = BoxBorder.Rounded,
+			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error),
+			Header = new PanelHeader("Exception Details")
+		};
+
+		Write(panel);
+		WriteLine();
+		return true;
+	}
+
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
@@ -32,94 +120,41 @@ public sealed class CallStackSpectreConsoleFormatter(
 		var frameChar = GetFrameCharForLevel(entry.Level);
 
 		// The top separator line
-		Writer.Write("┌─── ");
-		Writer.Write(new Text($"{frameChar}", levelStyle));
-		Writer.Write(" ");
+		Write("┌─── ");
+		Write(new Text($"{frameChar}", levelStyle));
+		Write(" ");
 
-		// Timestamp
-		var timestamp = entry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-		Writer.Write(new Text(timestamp, Theme.Timestamp));
-		Writer.Write(" ");
-
-		// Log level
-		Writer.Write(Theme.GetTextForLevel(entry.Level, Labels));
+		// Timestamp and log level
+		WriteTimestamp(entry.Timestamp);
+		WriteLevel(entry.Level, whiteSpace: Placement.Before);
 
 		// Finish the top line
-		Writer.WriteLine(" ───────────");
+		WriteLine(" ───────────");
 
 		// Category line
-		Writer.Write("│ ");
-		Writer.Write(new Text("SOURCE:", Style.Parse("dim")));
-		Writer.Write(" ");
-		if (!string.IsNullOrWhiteSpace(entry.Category))
-		{
-			Writer.WriteStyled(entry.Category, Theme.Category, true);
-		}
-		else
-		{
-			Writer.Write(new Text("<unknown>", Style.Parse("dim")));
-		}
-
-		Writer.WriteLine();
+		WriteCategory(entry.Category);
+		WriteLine();
 
 		// Scopes line (if present)
-		if (entry.Scopes.Count > 0)
+		if (WriteScopes(entry.Scopes))
 		{
-			Writer.Write("│ ");
-			Writer.Write(new Text("CONTEXT:", Style.Parse("dim")));
-
-			var style = Theme.Scopes;
-			for (var i = 0; i < entry.Scopes.Count; i++)
-			{
-				Writer.Write(" ");
-				if (i > 0)
-				{
-					Writer.WriteStyled("→ ", style);
-				}
-
-				Writer.WriteStyled(entry.Scopes[i]?.ToString() ?? "<null>", style);
-			}
-
-			Writer.WriteLine();
+			WriteLine();
 		}
 
 		// Message line
-		Writer.Write("│ ");
-		Writer.Write(new Text("MESSAGE:", Style.Parse("dim")));
-		Writer.Write(" ");
-		if (!string.IsNullOrWhiteSpace(entry.Message))
-		{
-			Writer.WriteStyled(entry.Message, Theme.Message);
-		}
-		else
-		{
-			Writer.Write(new Text("<empty>", Style.Parse("dim")));
-		}
-
-		Writer.WriteLine();
+		WriteMessage(entry.Message);
+		WriteLine();
 
 		// Bottom line
-		Writer.Write("└────");
-		var elapsedSeconds = entry.Elapsed.TotalSeconds;
-		Writer.Write(new Text($" Elapsed: {elapsedSeconds:0.000}s ", Theme.Timestamp));
-		Writer.WriteLine("────────");
+		Write("└────");
+		WriteElapsed(entry.Elapsed);
+		WriteLine("────────");
 
 		// Exception handling
-		if (entry.Exception is not null)
-		{
-			var panel = new Panel(new ExceptionDisplay(entry.Exception))
-			{
-				Border = BoxBorder.Rounded,
-				BorderStyle = levelStyle,
-				Header = new PanelHeader("Exception Details")
-			};
-
-			Writer.Write(panel);
-			Writer.WriteLine();
-		}
+		WriteException(entry.Exception);
 
 		// Add space after the entry
-		if (NewLine) Writer.WriteLine();
+		if (NewLine) WriteLine();
 	}
 
 	private static char GetFrameCharForLevel(LogLevel level) => level switch
