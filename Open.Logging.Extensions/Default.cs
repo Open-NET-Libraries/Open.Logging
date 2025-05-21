@@ -1,7 +1,7 @@
 ﻿namespace Open.Logging.Extensions;
 
 /// <summary>
-/// A collection of default values.
+/// A collection of default values used throughout the logging extensions.
 /// </summary>
 public static class Default
 {
@@ -15,8 +15,17 @@ public static class Default
 		= Microsoft.Extensions.Logging.LogLevel.Trace;
 #endif
 
+	/// <summary>
+	/// The default labels for different log levels.
+	/// </summary>
 	public static LogLevelLabels LevelLabels => LogLevelLabels.Default;
 
+	/// <summary>
+	/// The default formatter for log entries that writes to a <see cref="TextWriter"/>.
+	/// </summary>
+	/// <remarks>
+	/// Formats log entries with elapsed time, log level, category, scopes, message, and exception.
+	/// </remarks>
 	public static readonly Action<PreparedLogEntry, TextWriter> Formatter = (entry, writer) =>
 	{
 		// Write the required prefix.

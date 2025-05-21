@@ -82,8 +82,17 @@ public record SpectreConsoleLogTheme
 
 	private readonly ConcurrentDictionary<string, Text> _labelStyles = new();
 
+	/// <summary>
+	/// Gets a styled text representation for the specified log level using the provided labels.
+	/// </summary>
+	/// <param name="logLevel">The log level to get the styled text for.</param>
+	/// <param name="labels">The labels to use for the log levels.</param>
+	/// <returns>A styled <see cref="Text"/> object for the specified log level.</returns>
 	public Text GetTextForLevel(LogLevel logLevel, LogLevelLabels labels)
 		=> _labelStyles.GetOrAdd(labels.GetLabelForLevel(logLevel), k => new(k, GetStyleForLevel(logLevel)));
 
+	/// <summary>
+	/// The default theme instance.
+	/// </summary>
 	public static readonly SpectreConsoleLogTheme Default = new();
 }

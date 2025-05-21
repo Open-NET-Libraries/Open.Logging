@@ -2,6 +2,12 @@
 
 namespace Open.Logging.Extensions.SpectreConsole;
 
+/// <summary>
+/// A formatter that outputs log entries to the console using Spectre.Console for enhanced visual styling.
+/// </summary>
+/// <param name="theme">The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.</param>
+/// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Default.LevelLabels"/>.</param>
+/// <param name="writer">The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.</param>
 public sealed class SimpleSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
