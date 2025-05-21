@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 
 namespace Open.Logging.Extensions;
@@ -75,7 +74,7 @@ public sealed class BufferedLogger
 			_logChannel.Writer.WriteAsync(entry).AsTask().Wait();
 	}
 
-	private class LogEntry<TState>(
+	private sealed class LogEntry<TState>(
 		LogLevel logLevel,
 		EventId eventId,
 		TState state,
@@ -96,7 +95,7 @@ public sealed class BufferedLogger
 	{
 		try
 		{
-			await foreach (var logEntry in _logChannel.Reader.ReadAllAsync())
+			await foreach (var logEntry in _logChannel.Reader.ReadAllAsync().ConfigureAwait(false))
 			{
 				// Process each log entry by delegating to the inner logger
 				logEntry.WriteTo(_innerLogger);
@@ -112,13 +111,10 @@ public sealed class BufferedLogger
 	/// <summary>
 	/// Disposes of the buffered logger, ensuring all queued messages are processed.
 	/// </summary>
-	[SuppressMessage("Usage",
-		"CA1816:Dispose methods should call SuppressFinalize",
-		Justification = "Not necessary.")]
 	public async ValueTask DisposeAsync()
 	{
 		// Complete the channel
 		_logChannel.Writer.TryComplete();
-		await _processingTask;
+		await _processingTask.ConfigureAwait(false);
 	}
 }

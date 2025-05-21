@@ -6,7 +6,7 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// A formatter that outputs log entries to the console using Spectre.Console for enhanced visual styling.
 /// </summary>
 /// <param name="theme">The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.</param>
-/// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Default.LevelLabels"/>.</param>
+/// <param name="labels">The labels to use for different log levels. If null, uses <see cref="Defaults.LevelLabels"/>.</param>
 /// <param name="writer">The console writer to use. If null, uses <see cref="AnsiConsole.Console"/>.</param>
 public sealed class SimpleSpectreConsoleFormatter(
 	SpectreConsoleLogTheme? theme = null,
@@ -14,7 +14,7 @@ public sealed class SimpleSpectreConsoleFormatter(
 	IAnsiConsole? writer = null)
 {
 	private readonly SpectreConsoleLogTheme _theme = theme ?? SpectreConsoleLogTheme.Default;
-	private readonly LogLevelLabels _labels = labels ?? Default.LevelLabels;
+	private readonly LogLevelLabels _labels = labels ?? Defaults.LevelLabels;
 	private readonly IAnsiConsole _writer = writer ?? AnsiConsole.Console;
 
 	/// <summary>
@@ -31,7 +31,7 @@ public sealed class SimpleSpectreConsoleFormatter(
 	public void Write(PreparedLogEntry entry)
 	{
 		// Timestamp/
-		var elapsedSeconds = entry.GetElapsed().TotalSeconds;
+		var elapsedSeconds = entry.Elapsed.TotalSeconds;
 		_writer.Write(new Text($"{elapsedSeconds:000.000}s", _theme.Timestamp));
 
 		// Level
@@ -74,21 +74,28 @@ public sealed class SimpleSpectreConsoleFormatter(
 			_writer.Write(" ");
 			_writer.WriteStyled(entry.Message, _theme.Message);
 		}
+
+		_writer.WriteLine();
+
 		// Add the exception details if they exist.
 		if (entry.Exception is not null)
 		{
-			_writer.Write(Environment.NewLine);
+			var rule = new Rule() { Style = Color.Grey };
+			_writer.Write(rule);
 			try
 			{
 				_writer.WriteException(entry.Exception);
 			}
-			catch (Exception ex)
+			catch
 			{
-				// Fallback if WriteException fails
-				_writer.Write($"Exception: {entry.Exception.Message}");
-				_writer.Write(Environment.NewLine);
-				_writer.Write($"Stack Trace: {entry.Exception.StackTrace}");
+				// Fall-back if WriteException fails
+				_writer.WriteLine($"Exception: {entry.Exception.Message}");
+				var st = entry.Exception.StackTrace;
+				if (!string.IsNullOrWhiteSpace(st))
+					_writer.WriteLine(st);
 			}
+
+			_writer.Write(rule);
 		}
 	}
 

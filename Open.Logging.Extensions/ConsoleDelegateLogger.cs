@@ -7,7 +7,7 @@ namespace Open.Logging.Extensions;
 /// </summary>
 public class ConsoleDelegateLogger(
 	Action<PreparedLogEntry> handler,
-	LogLevel level = Default.LogLevel,
+	LogLevel level = Defaults.LogLevel,
 	string? category = null,
 	DateTimeOffset? timestamp = null,
 	IExternalScopeProvider? scopeProvider = null)

@@ -56,6 +56,6 @@ public readonly record struct PreparedLogEntry
 	/// Gets the amount of time that has elapsed since the recorded <see cref="Timestamp"/> and the <see cref="StartTime"/>.
 	/// </summary>
 	/// <returns></returns>
-	public TimeSpan GetElapsed()
+	public TimeSpan Elapsed
 		=> DateTimeOffset.Now - StartTime;
 }

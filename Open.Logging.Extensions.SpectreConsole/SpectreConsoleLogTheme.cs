@@ -89,7 +89,10 @@ public record SpectreConsoleLogTheme
 	/// <param name="labels">The labels to use for the log levels.</param>
 	/// <returns>A styled <see cref="Text"/> object for the specified log level.</returns>
 	public Text GetTextForLevel(LogLevel logLevel, LogLevelLabels labels)
-		=> _labelStyles.GetOrAdd(labels.GetLabelForLevel(logLevel), k => new(k, GetStyleForLevel(logLevel)));
+	{
+		ArgumentNullException.ThrowIfNull(labels);
+		return _labelStyles.GetOrAdd(labels.GetLabelForLevel(logLevel), k => new(k, GetStyleForLevel(logLevel)));
+	}
 
 	/// <summary>
 	/// The default theme instance.

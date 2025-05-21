@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Open.Logging.Extensions;
 
@@ -32,6 +33,7 @@ public abstract class ScopedLoggerBase(
 		Exception? exception,
 		Func<TState, Exception?, string> formatter)
 	{
+		Debug.Assert(formatter is not null);
 		var message = formatter(state, exception);
 		if (string.IsNullOrWhiteSpace(message) && exception is null)
 			return; // Nothing to log.

@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
+		<NoWarn>$(NoWarn);CS1591;CA1707;CA1848;</NoWarn>
 	</PropertyGroup>
+
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -14,6 +13,7 @@
 		<PackageReference Include="xunit" />
 		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
+
 	<ItemGroup>
 	  <ProjectReference Include="..\Open.Logging.Extensions.SpectreConsole\Open.Logging.Extensions.SpectreConsole.csproj" />
 	</ItemGroup>

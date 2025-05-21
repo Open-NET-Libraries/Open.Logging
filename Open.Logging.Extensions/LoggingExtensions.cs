@@ -59,9 +59,10 @@ public static class LoggingExtensions
 
 		if (synchronize)
 		{
+			var sync = new Lock();
 			handler = (writer, entry) =>
 			{
-				lock (writer)
+				lock (sync)
 				{
 					handler(writer, entry);
 				}

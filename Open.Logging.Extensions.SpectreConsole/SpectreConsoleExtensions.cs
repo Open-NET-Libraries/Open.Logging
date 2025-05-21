@@ -16,6 +16,7 @@ public static class SpectreConsoleExtensions
 	/// <param name="trim">Whether to trim whitespace from the text before writing. Default is false.</param>
 	public static void WriteStyled(this IAnsiConsole console, string? text, Style style, bool trim = false)
 	{
+		ArgumentNullException.ThrowIfNull(console);
 		if (trim ? string.IsNullOrWhiteSpace(text) : string.IsNullOrEmpty(text))
 			return;
 

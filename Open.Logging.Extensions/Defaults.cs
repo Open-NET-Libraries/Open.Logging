@@ -3,7 +3,7 @@
 /// <summary>
 /// A collection of default values used throughout the logging extensions.
 /// </summary>
-public static class Default
+public static class Defaults
 {
 	/// <summary>
 	/// The default log level for the logger.
@@ -29,7 +29,7 @@ public static class Default
 	public static readonly Action<PreparedLogEntry, TextWriter> Formatter = (entry, writer) =>
 	{
 		// Write the required prefix.
-		var elapsedSeconds = entry.GetElapsed().TotalSeconds;
+		var elapsedSeconds = entry.Elapsed.TotalSeconds;
 		writer.Write($"{elapsedSeconds:000.000}s [{LevelLabels.GetLabelForLevel(entry.Level)}]"); // Brackets [xxxx] are easier to search for in logs.
 
 		// Add the potential category name.

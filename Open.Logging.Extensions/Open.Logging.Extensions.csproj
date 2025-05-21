@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+		<VersionPrefix>1.0.0</VersionPrefix>
     <Description>Extensible logging utilities for .NET applications</Description>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,14 +16,11 @@
     <PackageReference Include="System.Threading.Channels" />
   </ItemGroup>
 
-	<!-- Disable the nullable warnings when compiling for .NET Standard 2.0 -->
-	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<NoWarn>$(NoWarn);nullable</NoWarn>
-	</PropertyGroup>
-
-	<!-- Common package references for all projects -->
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="9.0.4" />
+	<ItemGroup>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
-
+	
 </Project>

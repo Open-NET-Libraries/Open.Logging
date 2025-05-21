@@ -9,7 +9,7 @@ public class ConsoleDelegateFormatterTests
 	public void Write_FormatsAndInvokesHandler()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		PreparedLogEntry? capturedEntry = null;
 		TextWriter? capturedWriter = null;
 
@@ -44,7 +44,7 @@ public class ConsoleDelegateFormatterTests
 	public void Write_WithScopeProvider_PassesScopesToHandler()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		PreparedLogEntry? capturedEntry = null;
 		var scopeProvider = new LoggerExternalScopeProvider();
 
@@ -77,14 +77,14 @@ public class ConsoleDelegateFormatterTests
 		Assert.NotNull(capturedEntry);
 		Assert.Equal(2, capturedEntry!.Value.Scopes.Count);
 		Assert.Equal("Scope1", capturedEntry.Value.Scopes[0].ToString());
-		Assert.Contains("Scopes: 2", textWriter.ToString());
+		Assert.Contains("Scopes: 2", textWriter.ToString(), StringComparison.Ordinal);
 	}
 
 	[Fact]
 	public void Write_WithException_PassesExceptionToHandler()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		PreparedLogEntry? capturedEntry = null;
 		var expectedException = new InvalidOperationException("Test exception");
 
@@ -117,7 +117,7 @@ public class ConsoleDelegateFormatterTests
 	public void Write_WithEmptyMessage_DoesNotInvokeHandler()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		var handlerInvoked = false;
 
 		var formatter = new ConsoleDelegateFormatter(
@@ -148,7 +148,7 @@ public class ConsoleDelegateFormatterTests
 	public void Constructor_WithAlternateSignature_WrapsHandlerCorrectly()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		PreparedLogEntry? capturedEntry = null;
 
 		var formatter = new ConsoleDelegateFormatter(
@@ -175,7 +175,7 @@ public class ConsoleDelegateFormatterTests
 	public void Constructor_WithCustomTimestamp_UsesProvidedTimestamp()
 	{
 		// Arrange
-		var textWriter = new StringWriter();
+		using var textWriter = new StringWriter();
 		PreparedLogEntry? capturedEntry = null;
 		var timestamp = new DateTimeOffset(2023, 1, 1, 12, 0, 0, TimeSpan.Zero);
 
