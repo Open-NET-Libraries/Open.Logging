@@ -1,6 +1,6 @@
-# Open.Logging.Extensions
+# Open.Logging
 
-A lightweight .NET library that enhances the standard logging infrastructure with additional formatters and extensions.
+A lightweight set of .NET libraries that enhances the standard logging infrastructure with additional formatters and extensions.
 
 ## Features
 
