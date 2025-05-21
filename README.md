@@ -1,2 +1,102 @@
-# Open.Logging
-Utilities and extensions for simplifying .NET logging.
+# Open.Logging.Extensions
+
+A lightweight .NET library that enhances the standard logging infrastructure with additional formatters and extensions.
+
+## Features
+
+- Seamless integration with Microsoft.Extensions.Logging
+- Beautiful console output through Spectre Console integration
+- Customizable log formatting and styling
+- Support for log scopes and context
+- Thread-safe logging operations
+- Exception formatting and display
+
+## Installation
+
+```sh
+dotnet add package Open.Logging.Extensions
+```
+or for more colorful output:
+```sh
+dotnet add package Open.Logging.Extensions.SpectreConsole
+```
+
+
+## Usage
+
+### Basic Setup
+
+```csharp
+using Microsoft.Extensions.Logging;
+using Open.Logging.Extensions.SpectreConsole;
+
+// Add to your service collection
+services.AddLogging(builder =>
+{
+    builder.AddSpectreConsole();
+});
+
+// Inject and use
+public class MyService
+{
+    private readonly ILogger<MyService> _logger;
+    
+    public MyService(ILogger<MyService> logger)
+    {
+        _logger = logger;
+    }
+    
+    public void DoSomething()
+    {
+        _logger.LogInformation("Operation started");
+        // ...
+    }
+}
+```
+
+### Customizing Log Level Labels
+
+```csharp
+var customLabels = new LogLevelLabels
+{
+    Information = "INFO",
+    Warning = "ATTENTION",
+    Error = "PROBLEM"
+};
+
+services.AddLogging(builder =>
+{
+    builder.AddSpectreConsole(options =>
+    {
+        options.Labels = customLabels;
+    });
+});
+```
+
+### Custom Theming
+
+```csharp
+var theme = new SpectreConsoleLogTheme
+{
+    // Configure colors and styles
+};
+
+services.AddLogging(builder =>
+{
+    builder.AddSpectreConsole(options =>
+    {
+        options.Theme = theme;
+    });
+});
+```
+
+## Requirements
+
+These may expand in the future.  If anyone needs legacy support, please fill out an request in the repo on GitHub.
+
+- .NET 9.0
+- C# 13.0
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
