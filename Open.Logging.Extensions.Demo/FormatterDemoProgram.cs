@@ -141,56 +141,40 @@ internal static class FormatterDemoProgram
 			// Clear default providers
 			logging.ClearProviders();
 
+			var options = new SpectreConsoleLogOptions
+			{
+				Theme = theme
+			};
+
 			// Configure the selected formatter
 			switch (formatter)
 			{
 				case "Simple":
-					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options);
 					break;
 
 				case "Minimal Multi-Line":
-					logging.AddSpectreConsole<MinimalMutliLineSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<MinimalMutliLineSpectreConsoleFormatter>(options);
 					break;
 
 				case "Microsoft-Style":
-					logging.AddSpectreConsole<MicrosoftStyleSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<MicrosoftStyleSpectreConsoleFormatter>(options);
 					break;
 
 				case "Compact":
-					logging.AddSpectreConsole<CompactSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<CompactSpectreConsoleFormatter>(options);
 					break;
 
 				case "CallStack":
-					logging.AddSpectreConsole<CallStackSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<CallStackSpectreConsoleFormatter>(options);
 					break;
 
 				case "Structured Multi-line":
-					logging.AddSpectreConsole<StructuredMultilineFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<StructuredMultilineFormatter>(options);
 					break;
 
 				default:
-					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
-					{
-						options.Theme = theme;
-					});
+					logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options);
 					break;
 			}
 

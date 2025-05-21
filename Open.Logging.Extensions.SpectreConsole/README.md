@@ -129,11 +129,11 @@ services.AddLogging(builder =>
 
 ### Interactive Demo
 
-To explore the various formatters with different themes, run the demo application with the interactive flag:
+To explore the various formatters with different themes, run the demo:
 
 ```bash
 cd Open.Logging.Extensions.Demo
-dotnet run -- interactive
+dotnet run
 ```
 
 This will launch an interactive console application that allows you to select different formatters and themes to see how they look with sample log entries. It's a great way to experiment with different combinations before implementing them in your application.
@@ -243,26 +243,6 @@ services.AddLogging(builder =>
     });
 });
 ```
-
-### Screenshot Examples
-
-Below are examples of the different formatters in action:
-
-#### SimpleSpectreConsoleFormatter
-
-![SimpleSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/simple-formatter.png)
-
-#### MicrosoftStyleSpectreConsoleFormatter
-
-![MicrosoftStyleSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/microsoft-style-formatter.png)
-
-#### CallStackSpectreConsoleFormatter
-
-![CallStackSpectreConsoleFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/callstack-formatter.png)
-
-#### StructuredMultilineFormatter
-
-![StructuredMultilineFormatter example](https://raw.githubusercontent.com/Open-NET-Libraries/Open.Logging/main/Open.Logging.Extensions.SpectreConsole/docs/images/structured-multiline-formatter.png)
 
 ## Styling Reference
 
