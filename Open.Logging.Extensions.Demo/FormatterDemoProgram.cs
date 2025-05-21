@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Open.Logging.Extensions.Demo;
 using Open.Logging.Extensions.SpectreConsole;
+using Open.Logging.Extensions.SpectreConsole.Formatters;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
@@ -9,8 +10,15 @@ using System.Threading.Tasks;
 
 namespace Open.Logging.Extensions.FormatterDemo;
 
-public static class FormatterDemoProgram
+/// <summary>
+/// Provides interactive demo functionality for the Spectre Console formatters.
+/// </summary>
+internal static class FormatterDemoProgram
 {
+/// <summary>
+    /// Runs the interactive formatter demo.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation, with a result value of 0 on success.</returns>
     public static async Task<int> RunAsync()
     {
         // Show welcome banner
@@ -44,11 +52,10 @@ public static class FormatterDemoProgram
         var endRule = new Rule("[bold]Demo Complete[/]")
         {
             Style = Style.Parse("green")
-        };
-        AnsiConsole.Write(endRule);
+        };        AnsiConsole.Write(endRule);
 
         // Ask if the user wants to try another formatter
-        if (AnsiConsole.Confirm("Would you like to try another formatter?", defaultValue: true))
+        if (await AnsiConsole.ConfirmAsync("Would you like to try another formatter?", defaultValue: true).ConfigureAwait(false))
         {
             AnsiConsole.Clear();
             return await RunAsync().ConfigureAwait(false);
@@ -57,6 +64,10 @@ public static class FormatterDemoProgram
         return 0;
     }
 
+    /// <summary>
+    /// Gets the user's choice of formatter.
+    /// </summary>
+    /// <returns>The selected formatter name.</returns>
     private static string GetFormatterChoice()
     {
         // Available formatters
@@ -78,6 +89,10 @@ public static class FormatterDemoProgram
                 .AddChoices(formatters));
     }
 
+    /// <summary>
+    /// Gets the user's choice of theme.
+    /// </summary>
+    /// <returns>A tuple containing the theme name and the theme instance.</returns>
     private static (string Name, SpectreConsoleLogTheme Theme) GetThemeChoice()
     {
         // Available themes
@@ -115,6 +130,12 @@ public static class FormatterDemoProgram
         return ("Default", SpectreConsoleLogTheme.Default);
     }
 
+    /// <summary>
+    /// Configures the DI services with the selected formatter and theme.
+    /// </summary>
+    /// <param name="formatter">The name of the formatter to use.</param>
+    /// <param name="theme">The theme to apply to the formatter.</param>
+    /// <returns>A configured service provider.</returns>
     private static ServiceProvider ConfigureServices(string formatter, SpectreConsoleLogTheme theme)
     {
         var services = new ServiceCollection();
@@ -132,55 +153,53 @@ public static class FormatterDemoProgram
                 Warning = "WARN!",
                 Error = "ERROR",
                 Critical = "CRIT!",
-            };
-
-            // Configure the selected formatter
+            };            // Configure the selected formatter
             switch (formatter)
             {
                 case "Simple":
-                    logging.AddSpectreConsole(options =>
+                    logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 case "MicrosoftStyle":
-                    logging.AddMicrosoftStyleSpectreConsole(options =>
+                    logging.AddSpectreConsole<MicrosoftStyleSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 case "Compact":
-                    logging.AddCompactSpectreConsole(options =>
+                    logging.AddSpectreConsole<CompactSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 case "JsonStyle":
-                    logging.AddJsonStyleSpectreConsole(options =>
+                    logging.AddSpectreConsole<JsonStyleSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 case "Table":
-                    logging.AddTableSpectreConsole(options =>
+                    logging.AddSpectreConsole<TableSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 case "Tree":
-                    logging.AddTreeSpectreConsole(options =>
+                    logging.AddSpectreConsole<TreeSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
                 default:
-                    logging.AddSpectreConsole(options =>
+                    logging.AddSpectreConsole<SimpleSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
@@ -196,7 +215,12 @@ public static class FormatterDemoProgram
         services.AddTransient<LoggingDemoService>();
 
         return services.BuildServiceProvider();
-    }    private static async Task RunDemoWithServiceProvider(ServiceProvider serviceProvider)
+    }    /// <summary>
+    /// Runs the demo with the provided service provider.
+    /// </summary>
+    /// <param name="serviceProvider">The service provider containing the configured logger.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private static async Task RunDemoWithServiceProvider(ServiceProvider serviceProvider)
     {
         try
         {

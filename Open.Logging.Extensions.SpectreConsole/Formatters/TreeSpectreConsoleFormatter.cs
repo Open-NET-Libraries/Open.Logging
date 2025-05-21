@@ -1,5 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
@@ -22,10 +26,9 @@ public sealed class TreeSpectreConsoleFormatter(
 		LogLevelLabels? labels = null,
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, writer);
-
 	private readonly Dictionary<string, TreeNode> _categoryNodes = [];
 	private readonly Tree _logTree = new(new Text("Log Entries", Style.Parse("bold underline")));
-	private readonly Lock _lock = new();
+	private readonly object _lock = new();
 	private bool _isPending;
 	private DateTimeOffset _lastRenderTime = DateTimeOffset.MinValue;
 
@@ -39,27 +42,23 @@ public sealed class TreeSpectreConsoleFormatter(
 			{
 				categoryNode = _logTree.AddNode(new Text(entry.Category ?? "Global", Theme.Category));
 				_categoryNodes[entry.Category ?? "Global"] = categoryNode;
-			}
-
-			// Create the message node
+			}			// Create the message node
 			var messageText = new Text(entry.Message ?? string.Empty, Theme.Message);
 			var levelText = Theme.GetTextForLevel(entry.Level, Labels);
-			var timestamp = new Text($"[{DateTime.Now:HH:mm:ss.fff}]", Theme.Timestamp);
+			var timestamp = new Text($"[{DateTime.Now.ToString("HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}]", Theme.Timestamp);
 
 			var messageNode = categoryNode.AddNode(new Rows(
 				new Markup($"{timestamp} {levelText}"),
 				new Padder(messageText, new Padding(2, 0, 0, 0))
-			));
-
-			// Add scopes if present
+			));			// Add scopes if present
 			if (entry.Scopes.Count > 0)
-			{
-				var scopeTree = new Tree(new Text("Scopes", Style.Parse("dim")))
+			{				var scopeText = new Text("Scopes", Style.Parse("dim"));
+				var scopeTree = new Tree(scopeText)
 				{
 					Style = Theme.Scopes
 				};
 
-				TreeNode? currentNode = scopeTree;
+				var currentNode = scopeTree.AddNode("Root");
 				foreach (var scope in entry.Scopes)
 				{
 					currentNode = currentNode.AddNode(scope?.ToString() ?? "null");
@@ -94,15 +93,14 @@ public sealed class TreeSpectreConsoleFormatter(
 				if (renderNow)
 					RenderTree();
 				else
-				{
-					Task.Delay(300).ContinueWith(_ =>
+				{					Task.Delay(300).ContinueWith(_ =>
 					{
 						lock (_lock)
 						{
 							if (_isPending)
 								RenderTree();
 						}
-					});
+					}, TaskScheduler.Default);
 				}
 			}
 		}

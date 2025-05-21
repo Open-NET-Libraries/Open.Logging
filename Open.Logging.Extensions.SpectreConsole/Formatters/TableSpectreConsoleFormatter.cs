@@ -1,5 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Spectre.Console;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
@@ -38,8 +42,7 @@ public sealed class TableSpectreConsoleFormatter(
 			// If we have an exception, or reached sufficient entries, render the table
 			if (entry.Exception != null || _batchedEntries.Count >= 5)
 				RenderTable();
-			// Otherwise, set a flag to render the table on the next write
-			else if (!_isTablePending)
+			// Otherwise, set a flag to render the table on the next write			else if (!_isTablePending)
 			{
 				_isTablePending = true;
 				Task.Delay(200).ContinueWith(_ =>
@@ -49,7 +52,7 @@ public sealed class TableSpectreConsoleFormatter(
 						if (_isTablePending)
 							RenderTable();
 					}
-				});
+				}, TaskScheduler.Default);
 			}
 		}
 	}
@@ -74,12 +77,11 @@ public sealed class TableSpectreConsoleFormatter(
 		// Style the table
 		table.Border = TableBorder.Rounded;
 		table.BorderStyle = Style.Parse("grey");
-
 		// Add rows
 		foreach (var entry in _batchedEntries)
 		{
 			table.AddRow(
-				new Text(DateTime.Now.ToString("HH:mm:ss.fff"), Theme.Timestamp),
+				new Text(DateTime.Now.ToString("HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), Theme.Timestamp),
 				Theme.GetTextForLevel(entry.Level, Labels),
 				new Text(entry.Category ?? string.Empty, Theme.Category),
 				new Text(FormatScopes(entry.Scopes), Theme.Scopes),

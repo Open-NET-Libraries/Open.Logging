@@ -30,12 +30,13 @@ public static class LoggingBuilderExtensions
 
 		if (synchronize)
 		{
+			var unsynchronized = handler;
 			var sync = new Lock();
 			handler = (writer, entry) =>
 			{
 				lock (sync)
 				{
-					handler(writer, entry);
+					unsynchronized(writer, entry);
 				}
 			};
 		}

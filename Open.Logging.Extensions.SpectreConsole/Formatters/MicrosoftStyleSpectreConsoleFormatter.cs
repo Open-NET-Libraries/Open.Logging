@@ -22,12 +22,11 @@ public sealed class MicrosoftStyleSpectreConsoleFormatter(
 		LogLevelLabels? labels = null,
 		IAnsiConsole? writer = null)
 		=> new(theme, labels, writer);
-
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
 		// Format timestamp as full DateTime similar to Microsoft default
-		var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+		var timestamp = DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
 
 		// First line: timestamp and log level
 		Writer.Write(new Text(timestamp, Theme.Timestamp));

@@ -27,11 +27,10 @@ public sealed class JsonStyleSpectreConsoleFormatter(
 	{
 		var levelStyle = Theme.GetStyleForLevel(entry.Level);
 		Writer.Write("{ ");
-
 		// Timestamp
 		Writer.Write(new Text("time", Style.Parse("dim")));
 		Writer.Write(": ");
-		Writer.Write(new Text($"\"{DateTime.Now:HH:mm:ss.fff}\"", Theme.Timestamp));
+		Writer.Write(new Text($"\"{DateTime.Now.ToString("HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture)}\"", Theme.Timestamp));
 		Writer.Write(", ");
 
 		// Log level
