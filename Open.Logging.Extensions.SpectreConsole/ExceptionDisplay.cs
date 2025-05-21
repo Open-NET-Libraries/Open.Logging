@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace Open.Logging.Extensions.SpectreConsole;
@@ -40,9 +41,8 @@ internal sealed class ExceptionDisplay : IRenderable
     private string RenderExceptionToText()
     {
         var builder = new StringBuilder();
-        
-        // Exception type and message
-        builder.AppendLine($"[bold red]{_exception.GetType().Name}[/]: [yellow]{EscapeMarkup(_exception.Message)}[/]");
+          // Exception type and message
+        builder.AppendLine(CultureInfo.InvariantCulture, $"[bold red]{_exception.GetType().Name}[/]: [yellow]{EscapeMarkup(_exception.Message)}[/]");
         
         // Stack trace
         if (_exception.StackTrace != null)
@@ -53,23 +53,20 @@ internal sealed class ExceptionDisplay : IRenderable
             foreach (var line in lines)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                  var trimmedLine = line.TrimStart();
-                if (trimmedLine.StartsWith("at ", StringComparison.Ordinal))
+                  var trimmedLine = line.TrimStart();                if (trimmedLine.StartsWith("at ", StringComparison.Ordinal))
                 {
-                    builder.AppendLine($"  [dim]at[/] {EscapeMarkup(trimmedLine[3..])}");
+                    builder.AppendLine(CultureInfo.InvariantCulture, $"  [dim]at[/] {EscapeMarkup(trimmedLine[3..])}");
                 }
                 else
                 {
-                    builder.AppendLine($"  [dim]{EscapeMarkup(trimmedLine)}[/]");
+                    builder.AppendLine(CultureInfo.InvariantCulture, $"  [dim]{EscapeMarkup(trimmedLine)}[/]");
                 }
             }
         }
-        
-        // Inner exception
+          // Inner exception
         if (_exception.InnerException != null)
-        {
-            builder.AppendLine();
-            builder.AppendLine("[bold]Inner Exception:[/]");
+        {            builder.AppendLine();
+            builder.AppendLine(CultureInfo.InvariantCulture, $"[bold]Inner Exception:[/]");
             builder.AppendLine(new ExceptionDisplay(_exception.InnerException).RenderExceptionToText());
         }
         

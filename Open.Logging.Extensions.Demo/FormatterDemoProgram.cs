@@ -6,6 +6,7 @@ using Open.Logging.Extensions.SpectreConsole.Formatters;
 using Spectre.Console;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Open.Logging.Extensions.FormatterDemo;
@@ -15,7 +16,7 @@ namespace Open.Logging.Extensions.FormatterDemo;
 /// </summary>
 internal static class FormatterDemoProgram
 {
-/// <summary>
+    /// <summary>
     /// Runs the interactive formatter demo.
     /// </summary>
     /// <returns>A task representing the asynchronous operation, with a result value of 0 on success.</returns>
@@ -69,16 +70,14 @@ internal static class FormatterDemoProgram
     /// </summary>
     /// <returns>The selected formatter name.</returns>
     private static string GetFormatterChoice()
-    {
-        // Available formatters
+    {        // Available formatters
         var formatters = new[]
         {
             "Simple",
             "MicrosoftStyle",
             "Compact",
-            "JsonStyle",
-            "Table",
-            "Tree"
+            "CallStack",
+            "StructuredMultiline"
         };
 
         return AnsiConsole.Prompt(
@@ -177,22 +176,15 @@ internal static class FormatterDemoProgram
                         options.Labels = labels;
                     });
                     break;
-                case "JsonStyle":
-                    logging.AddSpectreConsole<JsonStyleSpectreConsoleFormatter>(options =>
+                case "CallStack":
+                    logging.AddSpectreConsole<CallStackSpectreConsoleFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
                     });
                     break;
-                case "Table":
-                    logging.AddSpectreConsole<TableSpectreConsoleFormatter>(options =>
-                    {
-                        options.Theme = theme;
-                        options.Labels = labels;
-                    });
-                    break;
-                case "Tree":
-                    logging.AddSpectreConsole<TreeSpectreConsoleFormatter>(options =>
+                case "StructuredMultiline":
+                    logging.AddSpectreConsole<StructuredMultilineFormatter>(options =>
                     {
                         options.Theme = theme;
                         options.Labels = labels;
