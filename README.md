@@ -2,6 +2,8 @@
 
 A lightweight set of .NET libraries that enhances the standard logging infrastructure with additional formatters and extensions.
 
+[![NuGet](https://img.shields.io/nuget/v/Open.Logging.Extensions.svg?label=NuGet)](https://www.nuget.org/packages/Open.Logging.Extensions/)
+
 ## Features
 
 - Seamless integration with Microsoft.Extensions.Logging

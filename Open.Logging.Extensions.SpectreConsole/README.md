@@ -2,6 +2,8 @@
 
 A lightweight integration between Microsoft's logging infrastructure and [Spectre.Console](https://spectreconsole.net/) for enhanced console logging.
 
+[![NuGet](https://img.shields.io/nuget/v/Open.Logging.Extensions.SpectreConsole.svg?label=NuGet)](https://www.nuget.org/packages/Open.Logging.Extensions.SpectreConsole/)
+
 ## Overview
 
 This library bridges the gap between the standard Microsoft.Extensions.Logging framework and Spectre.Console's rich styling capabilities, making it easy to use Spectre.Console as a logging target in your .NET applications.
