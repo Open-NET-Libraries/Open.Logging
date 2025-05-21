@@ -1,6 +1,6 @@
 ﻿using Spectre.Console;
 
-namespace Open.Logging.Extensions.SpectreConsole;
+namespace Open.Logging.Extensions.SpectreConsole.Formatters;
 
 /// <summary>
 /// A formatter that outputs log entries to the console using Spectre.Console for enhanced visual styling.
@@ -13,7 +13,15 @@ public sealed class SimpleSpectreConsoleFormatter(
 	LogLevelLabels? labels = null,
 	IAnsiConsole? writer = null)
 	: SpectreConsoleFormatterBase(theme, labels, writer)
+	, ISpectreConsoleFormatter<SimpleSpectreConsoleFormatter>
 {
+	/// <inheritdoc />
+	public static SimpleSpectreConsoleFormatter Create(
+		SpectreConsoleLogTheme? theme = null,
+		LogLevelLabels? labels = null,
+		IAnsiConsole? writer = null)
+		=> new(theme, labels, writer);
+
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
@@ -45,9 +53,7 @@ public sealed class SimpleSpectreConsoleFormatter(
 			for (var i = 0; i < entry.Scopes.Count; i++)
 			{
 				if (i > 0)
-				{
 					Writer.WriteStyled(" > ", style);
-				}
 
 				Writer.WriteStyled(entry.Scopes[i].ToString(), style);
 			}

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Open.Logging.Extensions.SpectreConsole.Formatters;
 using Spectre.Console;
 
 namespace Open.Logging.Extensions.SpectreConsole;

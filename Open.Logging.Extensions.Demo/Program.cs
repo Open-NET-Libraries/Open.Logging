@@ -1,12 +1,23 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Open.Logging.Extensions.Demo;
+using Open.Logging.Extensions.FormatterDemo;
 using Open.Logging.Extensions.SpectreConsole;
 using Spectre.Console;
+using System;
+using System.Globalization;
+using System.Threading.Tasks;
+
+// Check if the user wants to run the interactive formatter demo
+if (args.Length > 0 && args[0].Equals("interactive", StringComparison.OrdinalIgnoreCase))
+{
+    return await FormatterDemoProgram.RunAsync().ConfigureAwait(false);
+}
 
 // Create a service collection for DI
 var services = new ServiceCollection();
 
+// DO NOT REMOVE THIS SECTION: It verifies the DI Configuration
 #region DI Configuration Test
 // Add logging with our Spectre Console formatter
 services.AddLogging(logging =>
@@ -15,7 +26,7 @@ services.AddLogging(logging =>
 	logging.ClearProviders();
 
 	// Add Spectre console logger with options
-	logging.AddSimpleSpectreConsole(options =>
+	logging.AddSpectreConsole(options =>
 	{
 		options.Labels = new()
 		{
@@ -103,7 +114,7 @@ foreach (var (themeName, theme) in themes)
 	using var loggerFactory = LoggerFactory.Create(builder =>
 	{
 		builder.ClearProviders();
-		builder.AddSimpleSpectreConsole(options =>
+		builder.AddSpectreConsole(options =>
 		{
 			options.Theme = theme;
 			// Keep the same custom labels for consistency

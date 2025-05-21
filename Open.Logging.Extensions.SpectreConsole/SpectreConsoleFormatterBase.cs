@@ -12,6 +12,7 @@ public abstract class SpectreConsoleFormatterBase(
 	SpectreConsoleLogTheme? theme = null,
 	LogLevelLabels? labels = null,
 	IAnsiConsole? writer = null)
+	: ISpectreConsoleFormatter
 {
 	/// <summary>
 	/// The theme to use for console output styling. If null, uses <see cref="SpectreConsoleLogTheme.Default"/>.
@@ -35,10 +36,7 @@ public abstract class SpectreConsoleFormatterBase(
 		string name, DateTimeOffset? timestamp = null)
 		=> new(name, Write, timestamp);
 
-	/// <summary>
-	/// A method that accepts the <paramref name="entry"/> and may be used as a delegate for logging.
-	/// </summary>
-	/// <param name="entry">The prepared log entry to write.</param>
+	/// <inheritdoc />
 	public abstract void Write(PreparedLogEntry entry);
 
 	/// <remarks>Uses a lock on the writer to ensure only one log entry at a time.</remarks>
