@@ -72,8 +72,6 @@ public static class LoggingExtensions
 		builder.Services.AddSingleton<ConsoleFormatter>(sp =>
 			new ConsoleDelegateFormatter(name, handler, timestamp));
 
-		builder.AddConsoleFormatter<ConsoleDelegateFormatter, ConsoleFormatterOptions>();
-
 		if (configureOptions != null)
 		{
 			builder.Services.Configure(name, configureOptions);

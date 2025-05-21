@@ -25,7 +25,7 @@ public abstract class LoggerBase : ILogger
 		if (!IsEnabled(logLevel) || formatter is null)
 			return;
 
-		WriteLog( logLevel, eventId, state, exception, formatter);
+		WriteLog(logLevel, eventId, state, exception, formatter);
 	}
 
 	/// <inheritdoc />

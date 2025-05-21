@@ -1,12 +1,10 @@
-using Microsoft.Extensions.Logging;
-using NSubstitute;
 using Open.Logging.Extensions.SpectreConsole;
-using Spectre.Console;
 
 namespace Open.Logging.Extensions.Tests;
 
 public class SimpleSpectreConsoleFormatterTests
-{	[Fact]
+{
+	[Fact]
 	public void GetConsoleFormatter_ReturnsValidFormatter()
 	{
 		// Arrange

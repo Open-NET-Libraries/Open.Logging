@@ -1,171 +1,171 @@
 using Microsoft.Extensions.Logging;
-using NSubstitute;
 
 namespace Open.Logging.Extensions.Tests;
 
 public class ConsoleDelegateLoggerTests
 {
-    [Fact]
-    public void LogInformation_CallsDelegate()
-    {
-        // Arrange
-        var handlerCalled = false;
-        PreparedLogEntry capturedEntry = default;
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => { 
-                handlerCalled = true;
-                capturedEntry = entry;
-            },
-            LogLevel.Information,
-            "TestCategory");
+	[Fact]
+	public void LogInformation_CallsDelegate()
+	{
+		// Arrange
+		var handlerCalled = false;
+		PreparedLogEntry capturedEntry = default;
 
-        // Act
-        logger.LogInformation("Test message");
+		var logger = new ConsoleDelegateLogger(
+			entry =>
+			{
+				handlerCalled = true;
+				capturedEntry = entry;
+			},
+			LogLevel.Information,
+			"TestCategory");
 
-        // Assert
-        Assert.True(handlerCalled);
-        Assert.Equal(LogLevel.Information, capturedEntry.Level);
-        Assert.Equal("Test message", capturedEntry.Message);
-        Assert.Equal("TestCategory", capturedEntry.Category);
-    }
+		// Act
+		logger.LogInformation("Test message");
 
-    [Fact]
-    public void LogWarning_RespectsDelegateFunction()
-    {
-        // Arrange
-        var messages = new List<string>();
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => messages.Add(entry.Message),
-            LogLevel.Warning,
-            "TestCategory");
+		// Assert
+		Assert.True(handlerCalled);
+		Assert.Equal(LogLevel.Information, capturedEntry.Level);
+		Assert.Equal("Test message", capturedEntry.Message);
+		Assert.Equal("TestCategory", capturedEntry.Category);
+	}
 
-        // Act
-        logger.LogInformation("This should not be captured");
-        logger.LogWarning("This should be captured");
-        logger.LogError("This should also be captured");
+	[Fact]
+	public void LogWarning_RespectsDelegateFunction()
+	{
+		// Arrange
+		var messages = new List<string>();
 
-        // Assert
-        Assert.Equal(2, messages.Count);
-        Assert.Contains("This should be captured", messages);
-        Assert.Contains("This should also be captured", messages);
-        Assert.DoesNotContain("This should not be captured", messages);
-    }
+		var logger = new ConsoleDelegateLogger(
+			entry => messages.Add(entry.Message),
+			LogLevel.Warning,
+			"TestCategory");
 
-    [Fact]
-    public void LogWithScope_PassesScopeToDelegate()
-    {
-        // Arrange
-        PreparedLogEntry capturedEntry = default;
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => capturedEntry = entry,
-            LogLevel.Information,
-            "TestCategory",
-            scopeProvider: new LoggerExternalScopeProvider());
+		// Act
+		logger.LogInformation("This should not be captured");
+		logger.LogWarning("This should be captured");
+		logger.LogError("This should also be captured");
 
-        // Act
-        using (logger.BeginScope("TestScope"))
-        {
-            logger.LogInformation("Message with scope");
-        }
+		// Assert
+		Assert.Equal(2, messages.Count);
+		Assert.Contains("This should be captured", messages);
+		Assert.Contains("This should also be captured", messages);
+		Assert.DoesNotContain("This should not be captured", messages);
+	}
 
-        // Assert
-        Assert.Single(capturedEntry.Scopes);
-        Assert.Equal("TestScope", capturedEntry.Scopes[0].ToString());
-    }
+	[Fact]
+	public void LogWithScope_PassesScopeToDelegate()
+	{
+		// Arrange
+		PreparedLogEntry capturedEntry = default;
 
-    [Fact]
-    public void LogError_WithException_PassesExceptionToDelegate()
-    {
-        // Arrange
-        PreparedLogEntry capturedEntry = default;
-        var expectedException = new InvalidOperationException("Test exception");
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => capturedEntry = entry,
-            LogLevel.Error,
-            "TestCategory");
+		var logger = new ConsoleDelegateLogger(
+			entry => capturedEntry = entry,
+			LogLevel.Information,
+			"TestCategory",
+			scopeProvider: new LoggerExternalScopeProvider());
 
-        // Act
-        logger.LogError(expectedException, "Error with exception");
+		// Act
+		using (logger.BeginScope("TestScope"))
+		{
+			logger.LogInformation("Message with scope");
+		}
 
-        // Assert
-        Assert.Equal(expectedException, capturedEntry.Exception);
-        Assert.Equal("Error with exception", capturedEntry.Message);
-    }
+		// Assert
+		Assert.Single(capturedEntry.Scopes);
+		Assert.Equal("TestScope", capturedEntry.Scopes[0].ToString());
+	}
 
-    [Fact]
-    public void Constructor_WithNullHandler_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => 
-            new ConsoleDelegateLogger(null!, LogLevel.Information, "TestCategory"));
-    }
+	[Fact]
+	public void LogError_WithException_PassesExceptionToDelegate()
+	{
+		// Arrange
+		PreparedLogEntry capturedEntry = default;
+		var expectedException = new InvalidOperationException("Test exception");
 
-    [Fact]
-    public void Logger_WithSpecificTimestamp_UsesProvidedTimestamp()
-    {
-        // Arrange
-        var timestamp = new DateTimeOffset(2023, 1, 1, 12, 0, 0, TimeSpan.Zero);
-        PreparedLogEntry capturedEntry = default;
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => capturedEntry = entry,
-            LogLevel.Information,
-            "TestCategory",
-            timestamp);
+		var logger = new ConsoleDelegateLogger(
+			entry => capturedEntry = entry,
+			LogLevel.Error,
+			"TestCategory");
 
-        // Act
-        logger.LogInformation("Test message");
+		// Act
+		logger.LogError(expectedException, "Error with exception");
 
-        // Assert
-        Assert.Equal(timestamp, capturedEntry.StartTime);
-    }
+		// Assert
+		Assert.Equal(expectedException, capturedEntry.Exception);
+		Assert.Equal("Error with exception", capturedEntry.Message);
+	}
 
-    [Fact]
-    public void LogWithNestedScopes_CapturesAllScopes()
-    {
-        // Arrange
-        PreparedLogEntry capturedEntry = default;
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => capturedEntry = entry,
-            LogLevel.Information,
-            "TestCategory",
-            scopeProvider: new LoggerExternalScopeProvider());
+	[Fact]
+	public void Constructor_WithNullHandler_ThrowsArgumentNullException()
+	{
+		// Act & Assert
+		Assert.Throws<ArgumentNullException>(() =>
+			new ConsoleDelegateLogger(null!, LogLevel.Information, "TestCategory"));
+	}
 
-        // Act
-        using (logger.BeginScope("OuterScope"))
-        {
-            using (logger.BeginScope("InnerScope"))
-            {
-                logger.LogInformation("Message with nested scopes");
-            }
-        }
+	[Fact]
+	public void Logger_WithSpecificTimestamp_UsesProvidedTimestamp()
+	{
+		// Arrange
+		var timestamp = new DateTimeOffset(2023, 1, 1, 12, 0, 0, TimeSpan.Zero);
+		PreparedLogEntry capturedEntry = default;
 
-        // Assert
-        Assert.Equal(2, capturedEntry.Scopes.Count);
-        Assert.Equal("OuterScope", capturedEntry.Scopes[0].ToString());
-        Assert.Equal("InnerScope", capturedEntry.Scopes[1].ToString());
-    }
+		var logger = new ConsoleDelegateLogger(
+			entry => capturedEntry = entry,
+			LogLevel.Information,
+			"TestCategory",
+			timestamp);
 
-    [Fact]
-    public void LogWithStructuredData_FormatsMessageCorrectly()
-    {
-        // Arrange
-        PreparedLogEntry capturedEntry = default;
-        
-        var logger = new ConsoleDelegateLogger(
-            entry => capturedEntry = entry,
-            LogLevel.Information,
-            "TestCategory");
+		// Act
+		logger.LogInformation("Test message");
 
-        // Act
-        logger.LogInformation("User {UserId} logged in from {IpAddress}", 123, "192.168.1.1");
+		// Assert
+		Assert.Equal(timestamp, capturedEntry.StartTime);
+	}
 
-        // Assert
-        Assert.Equal("User 123 logged in from 192.168.1.1", capturedEntry.Message);
-    }
+	[Fact]
+	public void LogWithNestedScopes_CapturesAllScopes()
+	{
+		// Arrange
+		PreparedLogEntry capturedEntry = default;
+
+		var logger = new ConsoleDelegateLogger(
+			entry => capturedEntry = entry,
+			LogLevel.Information,
+			"TestCategory",
+			scopeProvider: new LoggerExternalScopeProvider());
+
+		// Act
+		using (logger.BeginScope("OuterScope"))
+		{
+			using (logger.BeginScope("InnerScope"))
+			{
+				logger.LogInformation("Message with nested scopes");
+			}
+		}
+
+		// Assert
+		Assert.Equal(2, capturedEntry.Scopes.Count);
+		Assert.Equal("OuterScope", capturedEntry.Scopes[0].ToString());
+		Assert.Equal("InnerScope", capturedEntry.Scopes[1].ToString());
+	}
+
+	[Fact]
+	public void LogWithStructuredData_FormatsMessageCorrectly()
+	{
+		// Arrange
+		PreparedLogEntry capturedEntry = default;
+
+		var logger = new ConsoleDelegateLogger(
+			entry => capturedEntry = entry,
+			LogLevel.Information,
+			"TestCategory");
+
+		// Act
+		logger.LogInformation("User {UserId} logged in from {IpAddress}", 123, "192.168.1.1");
+
+		// Assert
+		Assert.Equal("User 123 logged in from 192.168.1.1", capturedEntry.Message);
+	}
 }

@@ -7,52 +7,52 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// <summary>
 /// Defines color theme for SpectreConsoleLogger
 /// </summary>
-public record SpectreConsoleLogTheme
+public partial record SpectreConsoleLogTheme
 {
 	/// <summary>
 	/// Style for Trace level logs
 	/// </summary>
-	public Style Trace { get; init; } = "dim silver";
+	public Style Trace { get; init; } = new Style(Color.Grey);
 
 	/// <summary>
 	/// Style for Debug level logs
 	/// </summary>
-	public Style Debug { get; init; } = "dim blue";
+	public Style Debug { get; init; } = new Style(Color.Blue);
 
 	/// <summary>
 	/// Style for Information level logs
 	/// </summary>
-	public Style Information { get; init; } = "cyan";
+	public Style Information { get; init; } = Color.Green;
 
 	/// <summary>
 	/// Style for Warning level logs
 	/// </summary>
-	public Style Warning { get; init; } = "bold gold1";
+	public Style Warning { get; init; } = new Style(Color.Yellow, decoration: Decoration.Bold);
 
 	/// <summary>
 	/// Style for Error level logs
 	/// </summary>
-	public Style Error { get; init; } = "bold red3";
+	public Style Error { get; init; } = new Style(Color.Red, decoration: Decoration.Bold);
 
 	/// <summary>
 	/// Style for Critical level logs
 	/// </summary>
-	public Style Critical { get; init; } = "bold gray on red3";
+	public Style Critical { get; init; } = new Style(Color.White, Color.Red, Decoration.Bold);
 
 	/// <summary>
 	/// Style for timestamp
 	/// </summary>
-	public Style Timestamp { get; init; } = "dim gray";
+	public Style Timestamp { get; init; } = new Style(Color.Grey);
 
 	/// <summary>
 	/// Style for category name
 	/// </summary>
-	public Style Category { get; init; } = "gray italic";
+	public Style Category { get; init; } = new Style(Color.Grey, decoration: Decoration.Italic);
 
 	/// <summary>
 	/// Style for scope information
 	/// </summary>
-	public Style Scopes { get; init; } = "dim green";
+	public Style Scopes { get; init; } = new Style(Color.Blue);
 
 	/// <summary>
 	/// Style for Message details
@@ -62,7 +62,7 @@ public record SpectreConsoleLogTheme
 	/// <summary>
 	/// Style for Exception details
 	/// </summary>
-	public Style Exception { get; init; } = "gray";
+	public Style Exception { get; init; } = Color.Red;
 
 	/// <summary>
 	/// Get the color for a specific log level
@@ -97,5 +97,9 @@ public record SpectreConsoleLogTheme
 	/// <summary>
 	/// The default theme instance.
 	/// </summary>
+	/// <remarks>
+	/// The default theme uses standard terminal colors for maximum compatibility with all terminal types
+	/// including legacy terminals with limited color support.
+	/// </remarks>
 	public static readonly SpectreConsoleLogTheme Default = new();
 }
