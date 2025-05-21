@@ -7,6 +7,7 @@ using Spectre.Console;
 // Create a service collection for DI
 var services = new ServiceCollection();
 
+#region DI Configuration Test
 // Add logging with our Spectre Console formatter
 services.AddLogging(logging =>
 {
@@ -55,78 +56,82 @@ try
 	};
 	AnsiConsole.Write(endRule);
 
-	// -------------------- Theme Demonstrations --------------------
-
-	// Display a heading for the theme demos
-	AnsiConsole.WriteLine();
-	var themeDemoRule = new Rule("[bold yellow]Theme Demonstrations[/]")
-	{
-		Style = Style.Parse("yellow")
-	};
-	AnsiConsole.Write(themeDemoRule);
-	AnsiConsole.WriteLine();
-
-	// Get available themes
-	var themes = new[]
-	{
-		("ModernColors", SpectreConsoleLogTheme.ModernColors),
-		("TweakedDefaults", SpectreConsoleLogTheme.TweakedDefaults),
-		("LightBackground", SpectreConsoleLogTheme.LightBackground),
-		("Dracula", SpectreConsoleLogTheme.Dracula),
-		("Monokai", SpectreConsoleLogTheme.Monokai),
-		("SolarizedDark", SpectreConsoleLogTheme.SolarizedDark),
-		("OneDark", SpectreConsoleLogTheme.OneDark)
-	};
-
-	// Demonstrate each theme
-	foreach (var (themeName, theme) in themes)
-	{
-		// Display theme name
-		AnsiConsole.WriteLine();
-		var themeRule = new Rule($"[bold]Theme: {themeName}[/]")
-		{
-			Style = Style.Parse("cyan")
-		};
-		AnsiConsole.Write(themeRule);
-		AnsiConsole.WriteLine();
-
-		// Create a logger factory with the current theme
-		using var loggerFactory = LoggerFactory.Create(builder =>
-		{
-			builder.ClearProviders();
-			builder.AddSimpleSpectreConsole(options =>
-			{
-				options.Theme = theme;
-				// Keep the same custom labels for consistency
-				options.Labels = new()
-				{
-					Information = "INFO-",
-					Warning = "WARN!",
-					Error = "ERROR",
-					Critical = "CRIT!",
-				};
-			});
-			builder.SetMinimumLevel(LogLevel.Trace);
-		});
-
-		// Create logger and demo service
-		var themeLogger = loggerFactory.CreateLogger<LoggingDemoService>();
-		var themeDemo = new LoggingDemoService(themeLogger);
-
-		// Run the demo with this theme
-		await themeDemo.RunAsync().ConfigureAwait(false);
-	}
-
-	// Final message
-	AnsiConsole.WriteLine();
-	var finalRule = new Rule("[bold green]All Themes Demonstrated[/]")
-	{
-		Style = Style.Parse("green")
-	};
-	AnsiConsole.Write(finalRule);
 }
 catch (Exception ex)
 {
 	AnsiConsole.WriteException(ex);
+	return 1;
+}
+#endregion
+
+// -------------------- Theme Demonstrations --------------------
+
+// Display a heading for the theme demos
+AnsiConsole.WriteLine();
+var themeDemoRule = new Rule("[bold yellow]Theme Demonstrations[/]")
+{
+	Style = Style.Parse("yellow")
+};
+AnsiConsole.Write(themeDemoRule);
+AnsiConsole.WriteLine();
+
+// Get available themes
+var themes = new[]
+{
+	("ModernColors", SpectreConsoleLogTheme.ModernColors),
+	("TweakedDefaults", SpectreConsoleLogTheme.TweakedDefaults),
+	("LightBackground", SpectreConsoleLogTheme.LightBackground),
+	("Dracula", SpectreConsoleLogTheme.Dracula),
+	("Monokai", SpectreConsoleLogTheme.Monokai),
+	("SolarizedDark", SpectreConsoleLogTheme.SolarizedDark),
+	("OneDark", SpectreConsoleLogTheme.OneDark)
+};
+
+// Demonstrate each theme
+foreach (var (themeName, theme) in themes)
+{
+	// Display theme name
+	AnsiConsole.WriteLine();
+	var themeRule = new Rule($"[bold]Theme: {themeName}[/]")
+	{
+		Style = Style.Parse("cyan")
+	};
+	AnsiConsole.Write(themeRule);
+	AnsiConsole.WriteLine();
+
+	// Create a logger factory with the current theme
+	using var loggerFactory = LoggerFactory.Create(builder =>
+	{
+		builder.ClearProviders();
+		builder.AddSimpleSpectreConsole(options =>
+		{
+			options.Theme = theme;
+			// Keep the same custom labels for consistency
+			options.Labels = new()
+			{
+				Information = "INFO-",
+				Warning = "WARN!",
+				Error = "ERROR",
+				Critical = "CRIT!",
+			};
+		});
+		builder.SetMinimumLevel(LogLevel.Trace);
+	});
+
+	// Create logger and demo service
+	var themeLogger = loggerFactory.CreateLogger<LoggingDemoService>();
+	var themeDemo = new LoggingDemoService(themeLogger);
+
+	// Run the demo with this theme
+	await themeDemo.RunAsync().ConfigureAwait(false);
 }
 
+// Final message
+AnsiConsole.WriteLine();
+var finalRule = new Rule("[bold green]All Themes Demonstrated[/]")
+{
+	Style = Style.Parse("green")
+};
+
+AnsiConsole.Write(finalRule);
+return 0;

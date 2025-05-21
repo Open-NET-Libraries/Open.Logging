@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
+﻿using Microsoft.Extensions.Logging;
 
 namespace Open.Logging.Extensions;
 
@@ -36,62 +34,4 @@ public static class LoggingExtensions
 		this ILogger logger, int maxQueueSize = 10000,
 		bool allowSynchronousContinuations = false)
 		=> new(logger, maxQueueSize, allowSynchronousContinuations);
-
-	/// <summary>
-	/// Adds a specialized console formatter to the logging builder.
-	/// </summary>
-	public static ILoggingBuilder AddSpecializedConsoleFormatter(
-		this ILoggingBuilder builder,
-		string name,
-		Action<TextWriter, PreparedLogEntry> handler,
-		Action<ConsoleFormatterOptions>? configureOptions = null,
-		DateTimeOffset? timestamp = null,
-		bool synchronize = false)
-	{
-		if (builder == null)
-			throw new ArgumentNullException(nameof(builder));
-
-		if (string.IsNullOrWhiteSpace(name))
-			throw new ArgumentException("Formatter name must be provided.", nameof(name));
-
-		if (handler == null)
-			throw new ArgumentNullException(nameof(handler));
-
-		if (synchronize)
-		{
-			var sync = new Lock();
-			handler = (writer, entry) =>
-			{
-				lock (sync)
-				{
-					handler(writer, entry);
-				}
-			};
-		}
-
-		builder.Services.AddSingleton<ConsoleFormatter>(sp =>
-			new ConsoleDelegateFormatter(name, handler, timestamp));
-
-		if (configureOptions != null)
-		{
-			builder.Services.Configure(name, configureOptions);
-		}
-
-		builder.AddConsole(options => options.FormatterName = name);
-
-		return builder;
-	}
-
-	/// <inheritdoc cref="AddSpecializedConsoleFormatter(ILoggingBuilder, string, Action{TextWriter, PreparedLogEntry}, Action{ConsoleFormatterOptions}?, DateTimeOffset?, bool)"/>
-	public static ILoggingBuilder AddSpecializedConsoleFormatter(
-		this ILoggingBuilder builder,
-		string name,
-		Action<PreparedLogEntry> handler,
-		Action<ConsoleFormatterOptions>? configureOptions = null,
-		DateTimeOffset? timestamp = null,
-		bool synchronize = false)
-		=> AddSpecializedConsoleFormatter(
-			builder, name,
-			handler is null ? null! : (_, e) => handler(e),
-			configureOptions, timestamp, synchronize);
 }
