@@ -14,6 +14,9 @@ namespace Open.Logging.Extensions;
 /// <item><description>Log file retention policies to manage disk space</description></item>
 /// </list>
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+	"Style", "IDE0032:Use auto property",
+	Justification = "Specialized setters.")]
 public record FileFormatterOptions : ConsoleTemplateFormatterOptions
 {
     /// <summary>
@@ -40,22 +43,22 @@ public record FileFormatterOptions : ConsoleTemplateFormatterOptions
         Error = "ERROR",
         Critical = "CRITICAL"
     };
-    
-    /// <summary>
-    /// Gets or sets the file name pattern for log files.
-    /// </summary>
-    /// <remarks>
-    /// The pattern can include the following placeholders:
-    /// <list type="bullet">
-    /// <item><description>{Timestamp} - The timestamp when the logger was created or when rolling to a new file</description></item>
-    /// </list>
-    /// Examples:
-    /// <list type="bullet">
-    /// <item><description>"log_{Timestamp:yyyyMMdd}.log" - Creates files like "log_20250523.log"</description></item>
-    /// <item><description>"app-{Timestamp:yyyy-MM-dd_HH-mm-ss}.log" - Creates files like "app-2025-05-23_14-30-00.log"</description></item>
-    /// </list>
-    /// </remarks>
-    private string _fileNamePattern = "log_{Timestamp:yyyyMMdd_HHmmss}.log";
+
+	/// <summary>
+	/// Gets or sets the file name pattern for log files.
+	/// </summary>
+	/// <remarks>
+	/// The pattern can include the following placeholders:
+	/// <list type="bullet">
+	/// <item><description>{Timestamp} - The timestamp when the logger was created or when rolling to a new file</description></item>
+	/// </list>
+	/// Examples:
+	/// <list type="bullet">
+	/// <item><description>"log_{Timestamp:yyyyMMdd}.log" - Creates files like "log_20250523.log"</description></item>
+	/// <item><description>"app-{Timestamp:yyyy-MM-dd_HH-mm-ss}.log" - Creates files like "app-2025-05-23_14-30-00.log"</description></item>
+	/// </list>
+	/// </remarks>
+	private string _fileNamePattern = "log_{Timestamp:yyyyMMdd_HHmmss}.log";
     
     /// <summary>
     /// Gets or sets the file name pattern for log files.
