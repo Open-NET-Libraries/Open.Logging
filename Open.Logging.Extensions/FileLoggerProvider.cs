@@ -266,13 +266,13 @@ public sealed class FileLoggerProvider : ILoggerProvider, IAsyncDisposable
 
         return result.ToString();
     }
-    
+
     private static string FormatException(Exception exception, string? category = null)
     {
         if (exception == null) return string.Empty;
 
         var exceptionString = exception.ToString();
-        var lines = exceptionString.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        var lines = exceptionString.Split([Environment.NewLine], StringSplitOptions.None);
         var result = new StringBuilder();
 
         for (int i = 0; i < lines.Length; i++)
@@ -314,7 +314,7 @@ public sealed class FileLoggerProvider : ILoggerProvider, IAsyncDisposable
             {
                 result.Append(line);
             }
-            
+
             // Add newline for all but the last line
             if (i < lines.Length - 1)
             {
@@ -323,7 +323,9 @@ public sealed class FileLoggerProvider : ILoggerProvider, IAsyncDisposable
         }
 
         return result.ToString();
-    }    /// <summary>
+    }
+
+    /// <summary>
     /// Ensures that a file path in a stack trace "in" portion is properly quoted.
     /// </summary>
     /// <param name="inPortion">The "in" portion of a stack trace line (e.g., " in D:\path\file.cs:line 123")</param>
@@ -335,12 +337,12 @@ public sealed class FileLoggerProvider : ILoggerProvider, IAsyncDisposable
 
         // Look for pattern: " in [optional quote]path[optional quote]:line number"
         const string inPrefix = " in ";
-        
+
         if (!inPortion.StartsWith(inPrefix, StringComparison.Ordinal))
             return inPortion;
 
         var pathPart = inPortion.Substring(inPrefix.Length);
-        
+
         // If already properly quoted (starts and ends with quotes around path+line), return as-is
         if (pathPart.StartsWith('"') && pathPart.EndsWith('"'))
             return inPortion;
@@ -359,7 +361,7 @@ public sealed class FileLoggerProvider : ILoggerProvider, IAsyncDisposable
 
         // Remove any existing quotes from the file path
         filePath = filePath.Trim('"');
-        
+
         // Return with properly quoted path + line number
         return $"{inPrefix}\"{filePath}{lineNumberPart}\"";
     }

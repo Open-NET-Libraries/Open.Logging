@@ -58,6 +58,7 @@ Use modern C# features like:
 ## ⚙️ Formatting and Code Style
 
 - Follow the rules from `.editorconfig`.
+- Make sure to put an extra line after closing braces.
 - Use expressive, intention-revealing names (no abbreviations)
 - Public interfaces must include XML documentation (`///`)
 - Use fluent APIs where appropriate to improve readability
