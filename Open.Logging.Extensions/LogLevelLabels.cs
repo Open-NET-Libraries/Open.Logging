@@ -30,12 +30,12 @@ public record LogLevelLabels
 	/// <summary>
 	/// Label text for Error level logs
 	/// </summary>
-	public string Error { get; init; } = "ERR!";
+	public string Error { get; init; } = "ERROR";
 
 	/// <summary>
 	/// Label text for Critical level logs
 	/// </summary>
-	public string Critical { get; init; } = "CRIT";
+	public string Critical { get; init; } = "CRITICAL";
 
 	/// <summary>
 	/// The default labels for log levels

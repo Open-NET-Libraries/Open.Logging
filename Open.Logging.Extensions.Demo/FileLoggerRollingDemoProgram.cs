@@ -50,7 +50,7 @@ internal static class FileLoggerRollingDemoProgram
 
 			// Also log to console so we can see what's happening
 			builder.AddConsole();
-		});		var serviceProvider = services.BuildServiceProvider();
+		}); var serviceProvider = services.BuildServiceProvider();
 		var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 		var logger = loggerFactory.CreateLogger("FileLoggerRollingDemo");
 

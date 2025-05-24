@@ -39,13 +39,25 @@ public class ConsoleTemplateFormatter(
 			DateTimeOffset.Now - options.Timestamp,
 			logEntry.Category,
 			FormatScopes(scopeProvider.CaptureScope()),
-			logEntry.LogLevel,
+			options.LevelLabels.GetLabelForLevel(logEntry.LogLevel),
 			message,
-			logEntry.Exception)
-			.Trim(' ', '\r', 'n');
+			logEntry.Exception?.ToLogString(logEntry.Category) ?? string.Empty)
+			.AsSpan()
+			.TrimEnd(" \r\n");
 
-		if (string.IsNullOrWhiteSpace(output)) return; // Nothing to log.
+		if (output.Length == 0) return; // Nothing to log? Rare (overly simple) format strings might produce this occasionally.
 		textWriter.WriteLine(output);
+
+		var separator = _options.EntrySeparator;
+		if (string.IsNullOrEmpty(_options.EntrySeparator)) return;
+		if (separator == Environment.NewLine)
+		{
+
+			textWriter.WriteLine();
+			return;
+		}
+
+		textWriter.WriteLine(separator.AsSpan().TrimEnd());
 	}
 
 	private string FormatScopes(IReadOnlyList<object> scopes)

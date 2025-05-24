@@ -22,7 +22,7 @@ public record ConsoleTemplateFormatterOptions
 	/// </summary>
 	public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.Now;
 
-	private string _template = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}{NewLine}";
+	private string _template = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
 	/// <summary>
 	/// Gets or sets the template for formatting log entries.
 	/// </summary>
@@ -53,12 +53,31 @@ public record ConsoleTemplateFormatterOptions
 		}
 	}
 
+	/// <summary>
+	/// Gets or sets the string used to separate log entries.
+	/// </summary>
+	/// <remarks>
+	/// Empty string will eliminate the separation between log entries.
+	/// Any other string will be added as a separate line between log entries.
+	/// </remarks>
+	public string? EntrySeparator { get; set; } = Environment.NewLine;
+
 	private readonly static Regex TemplateTokenPattern
-		= new(@"\{(\w+)(:[^}]+)?}", RegexOptions.Compiled | RegexOptions.NonBacktracking);	/// <summary>
+		= new(@"\{(\w+)(:[^}]+)?}", RegexOptions.Compiled | RegexOptions.NonBacktracking);
+
+	/// <summary>
 	/// The format string for the template.
 	/// </summary>
 	public string TemplateFormatString { get; private set; }
 		= "{1:HH:mm:ss.fff} {2}{3}{0}[{4}]: {5}{6}";
+
+	/// <summary>
+	/// Gets or sets custom labels for different log levels.
+	/// </summary>
+	/// <remarks>
+	/// These labels are used in the log output when the {Level} placeholder is used in the template.
+	/// </remarks>
+	public LogLevelLabels LevelLabels { get; set; } = Defaults.LevelLabels;
 
 	/// <summary>
 	/// Gets or sets the log level filter.
