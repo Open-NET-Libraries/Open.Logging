@@ -69,14 +69,14 @@ internal sealed class FileLoggerDemoProgram
                         logger.LogDebug("This is a debug message");
                         logger.LogInformation("This is an information message");
                         logger.LogWarning("This is a warning message");
-                        
-                        try
+                          try
                         {
-                            throw new InvalidOperationException("This is a test exception");
+                            // Create a deeper stack trace
+                            SimulateDeepOperation();
                         }
                         catch (Exception ex)
                         {
-                            logger.LogError(ex, "An error occurred");
+                            logger.LogError(ex, "An error occurred during deep operation");
                         }
                     }
                     
@@ -142,11 +142,50 @@ internal sealed class FileLoggerDemoProgram
                     .Border(BoxBorder.Rounded)
                     .Header("Expected Log Format")
                 );
-            }
-        }
+            }        }
         else
         {
             AnsiConsole.MarkupLine($"[red]Log file not found at: {actualLogFilePath}[/]");
         }
+    }
+
+    /// <summary>
+    /// Simulates a deep operation to create a more complex stack trace.
+    /// </summary>
+    private static void SimulateDeepOperation()
+    {
+        ProcessBusinessLogic();
+    }
+
+    /// <summary>
+    /// Simulates business logic processing.
+    /// </summary>
+    private static void ProcessBusinessLogic()
+    {
+        ValidateInputData();
+    }
+
+    /// <summary>
+    /// Simulates input validation that eventually fails.
+    /// </summary>
+    private static void ValidateInputData()
+    {
+        CheckDataIntegrity();
+    }
+
+    /// <summary>
+    /// Simulates data integrity check that throws an exception.
+    /// </summary>
+    private static void CheckDataIntegrity()
+    {
+        PerformDatabaseOperation();
+    }
+
+    /// <summary>
+    /// Simulates a database operation that fails.
+    /// </summary>
+    private static void PerformDatabaseOperation()
+    {
+        throw new InvalidOperationException("Database connection failed during integrity check. The operation could not be completed due to a constraint violation in the user_data table.");
     }
 }
