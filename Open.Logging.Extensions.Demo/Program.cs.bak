@@ -10,12 +10,12 @@ namespace Open.Logging.Extensions.Demo;
 /// <summary>
 /// Main program entry point for the logging demos.
 /// </summary>
-internal static class Program
-{    /// <summary>
+public class Program
+{
+    /// <summary>
     /// Main entry point for the application.
     /// </summary>
-    /// <param name="args">Command line arguments.</param>
-    public static async Task<int> Main(string[] args)
+    /// <param name="args">Command line arguments.</param>    public static async Task<int> Main(string[] args)
     {
         // Ensure args is not null
         args ??= Array.Empty<string>();
@@ -53,22 +53,15 @@ internal static class Program
             Console.WriteLine("Available commands: file, rolling, test, menu");
             return 1;
         }
-    }    /// <summary>
+    }
+
+    /// <summary>
     /// Helper function to show the main menu.
     /// </summary>
     private static async Task<int> ShowMainMenuAsync()
     {
         // Create empty args array for demos that need it
         var emptyArgs = Array.Empty<string>();
-          // Define menu choices array to avoid CA1861 warning
-        var menuChoices = new[]
-        {
-            "1. Interactive Spectre Console Formatter Demo",
-            "2. File Logger Demo",
-            "3. File Logger with Rolling & Retention Demo", 
-            "4. Test Console Logger Demo",
-            "9. Exit"
-        };
         
         while (true)
         {
@@ -79,11 +72,19 @@ internal static class Program
                     .Centered());
                     
             AnsiConsole.WriteLine();
-              var choice = AnsiConsole.Prompt(
+            
+            var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("Choose a demo to run:")
                     .PageSize(10)
-                    .AddChoices(menuChoices));
+                    .AddChoices(new[]
+                    {
+                        "1. Interactive Spectre Console Formatter Demo",
+                        "2. File Logger Demo",
+                        "3. File Logger with Rolling & Retention Demo",
+                        "4. Test Console Logger Demo",
+                        "9. Exit"
+                    }));
 
             switch (choice)
             {
