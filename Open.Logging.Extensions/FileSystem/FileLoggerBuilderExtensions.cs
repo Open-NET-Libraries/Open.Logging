@@ -9,7 +9,7 @@ namespace Open.Logging.Extensions.FileSystem;
 /// <summary>
 /// Extension methods for adding and configuring <see cref="FileLoggerProvider"/> to the logging builder.
 /// </summary>
-public static class FileLoggerExtensions
+public static class FileLoggerBuilderExtensions
 {
 	/// <summary>
 	/// Adds a file logger that writes logs to a file.

@@ -6,7 +6,7 @@ namespace Open.Logging.Extensions.Memory;
 /// <summary>
 /// Extension methods for adding and configuring <see cref="MemoryLoggerProvider"/> to the logging builder.
 /// </summary>
-public static class MemoryLoggerExtensions
+public static class MemoryLoggerBuilderExtensions
 {
 	/// <summary>
 	/// Adds a memory logger provider to the logging builder.
