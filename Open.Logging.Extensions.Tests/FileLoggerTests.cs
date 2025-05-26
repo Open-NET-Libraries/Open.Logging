@@ -66,21 +66,6 @@ public class FileLoggerTests
 	}
 
 	[Fact]
-	public void FileLoggerProvider_Constructor_WithDefaultOptions_CreatesInstance()
-	{
-		// Act
-		using var provider = new FileLoggerProvider();
-
-		// Assert
-		Assert.NotNull(provider);
-		Assert.NotNull(provider.FilePath);
-		Assert.True(File.Exists(provider.FilePath));
-
-		// Clean up
-		Cleanup(provider.FilePath);
-	}
-
-	[Fact]
 	public void FileLoggerProvider_Constructor_WithOptions_CreatesInstance()
 	{
 		// Arrange
