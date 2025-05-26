@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Frozen;
+using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -8,9 +9,6 @@ namespace Open.Logging.Extensions;
 /// <summary>
 /// Options for configuring the file logger.
 /// </summary>
-[System.Diagnostics.CodeAnalysis.SuppressMessage(
-	"Style", "IDE0032:Use auto property",
-	Justification = "Specialized setters.")]
 public record TemplateFormatterOptions
 {
 	/// <summary>
@@ -21,7 +19,6 @@ public record TemplateFormatterOptions
 	/// </remarks>
 	public DateTimeOffset StartTime { get; set; } = DateTimeOffset.Now;
 
-	private string _template = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
 	/// <summary>
 	/// Gets or sets the template for formatting log entries.
 	/// </summary>
@@ -38,12 +35,11 @@ public record TemplateFormatterOptions
 	/// </remarks>
 	public string Template
 	{
-		get => _template;
+		get => field;
 		set
 		{
 			ArgumentNullException.ThrowIfNull(value);
-			_template = value;
-			TemplateFormatString = TemplateTokenPattern.Replace(value, m =>
+			var formatString = TemplateTokenPattern.Replace(value, m =>
 			{
 				var token = m.Groups[1].Value;
 				var format = m.Groups[2].Value;
@@ -51,8 +47,24 @@ public record TemplateFormatterOptions
 					? $"{{{tokenValue}{format ?? string.Empty}}}"
 					: m.Value;
 			});
+
+			// Validate the format string
+			_ = string.Format(
+				CultureInfo.InvariantCulture,
+				formatString,
+				Environment.NewLine,
+				DateTimeOffset.Now,
+				TimeSpan.FromSeconds(30),
+				nameof(TemplateFormatterOptions),
+				FormatScopes(["A", "B"]),
+				"WARN",
+				"The Message",
+				"The exception details.");
+
+			field = value;
+			TemplateFormatString = formatString;
 		}
-	}
+	} = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
 
 	/// <summary>
 	/// Gets or sets the string used to separate log entries.
@@ -70,7 +82,7 @@ public record TemplateFormatterOptions
 	/// The format string for the template.
 	/// </summary>
 	public string TemplateFormatString { get; private set; }
-		= "{2:hh:mm:ss.fff} {3}{4}{0}[{5}]: {6}{0}{7}";
+		= string.Empty;
 
 	/// <summary>
 	/// Gets or sets custom labels for different log levels.

@@ -37,14 +37,6 @@ public sealed partial class FileLoggerProvider
 	public string FilePath { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the <see cref="FileLoggerProvider"/> class with default options.
-	/// </summary>
-	public FileLoggerProvider()
-		: this(new FileLoggerFormatterOptions())
-	{
-	}
-
-	/// <summary>
 	/// Initializes a new instance of the <see cref="FileLoggerProvider"/> class with the specified options.
 	/// </summary>
 	/// <param name="options">The options for configuring the file logger.</param>
