@@ -5,14 +5,32 @@ namespace Open.Logging.Extensions;
 /// <summary>
 /// A base class for logging that handles log-levels.
 /// </summary>
-public abstract class LoggerBase : ILogger
+public abstract class LoggerBase(
+	string? category,
+	LogLevel minLogLevel,
+	IExternalScopeProvider? scopeProvider) : ILogger
 {
-	/// <inheritdoc />
-	public abstract IDisposable? BeginScope<TState>(TState state)
-		where TState : notnull;
+	/// <summary>
+	/// The category of the logger.
+	/// </summary>
+	public string Category { get; } = category ?? string.Empty;
+
+	private readonly IExternalScopeProvider? _scopeProvider = scopeProvider;
 
 	/// <inheritdoc />
-	public abstract bool IsEnabled(LogLevel logLevel);
+	public virtual IDisposable? BeginScope<TState>(TState state)
+		where TState : notnull
+		=> _scopeProvider?.Push(state!);
+
+	/// <summary>
+	/// Captures the current scope for logging.
+	/// </summary>
+	protected IReadOnlyList<object> CaptureScope()
+		=> _scopeProvider.CaptureScope();
+
+	/// <inheritdoc />
+	public virtual bool IsEnabled(LogLevel logLevel)
+		=> logLevel >= minLogLevel;
 
 	/// <inheritdoc />
 	public void Log<TState>(

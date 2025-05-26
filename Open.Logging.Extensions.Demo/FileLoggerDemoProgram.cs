@@ -8,7 +8,7 @@ internal sealed class FileLoggerDemoProgram
 {
 	public static void RunDemo()
 	{
-		Console.Clear();
+		System.Console.Clear();
 		var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
 		var fileNamePattern = "demo_{Timestamp}.log";
 		AnsiConsole.Write(
@@ -30,7 +30,7 @@ internal sealed class FileLoggerDemoProgram
 				// Add logging with file logger
 				services.AddLogging(builder =>
 				{
-					builder.AddFile(options =>
+					builder.AddFileLog(options =>
 					{
 						options.LogDirectory = logDirectory;
 						options.FileNamePattern = fileNamePattern;

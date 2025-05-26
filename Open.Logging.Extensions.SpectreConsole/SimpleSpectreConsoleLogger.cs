@@ -24,7 +24,10 @@ public class SimpleSpectreConsoleLogger(
 	bool newLine = false,
 	IAnsiConsole? console = null,
 	bool scoped = true)
-	: ScopedLoggerBase(level, category, timestamp ?? DateTimeOffset.Now, scoped ? new LoggerExternalScopeProvider() : null)
+	: PreparedLoggerBase(
+		category, level,
+		scoped ? new LoggerExternalScopeProvider() : null,
+		timestamp ?? DateTimeOffset.Now)
 {
 	private readonly SimpleSpectreConsoleFormatter formatter
 		= new(theme, labels, newLine, console);

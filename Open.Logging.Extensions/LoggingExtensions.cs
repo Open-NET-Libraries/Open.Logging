@@ -28,15 +28,6 @@ public static class LoggingExtensions
 	}
 
 	/// <summary>
-	/// Wraps a logger in a thread-safe buffered logger that processes log messages in the background
-	/// </summary>
-	/// <inheritdoc cref="BufferedLogger(ILogger, int, bool)"/>
-	public static BufferedLogger AsBuffered(
-		this ILogger logger, int maxQueueSize = 10000,
-		bool allowSynchronousContinuations = false)
-		=> new(logger, maxQueueSize, allowSynchronousContinuations);
-
-	/// <summary>
 	/// Formats an exception for logging, ensuring file paths are quoted and stack trace is simplified.
 	/// </summary>
 	public static string ToLogString(this Exception exception, string? category = null)

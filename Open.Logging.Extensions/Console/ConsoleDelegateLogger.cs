@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace Open.Logging.Extensions;
+namespace Open.Logging.Extensions.Console;
 
 /// <summary>
 /// Utility class for creating a logger that uses a delegate to handle log entries.
@@ -11,7 +11,7 @@ public class ConsoleDelegateLogger(
 	string? category = null,
 	DateTimeOffset? timestamp = null,
 	IExternalScopeProvider? scopeProvider = null)
-	: ScopedLoggerBase(level, category, timestamp ?? DateTimeOffset.Now, scopeProvider)
+	: PreparedLoggerBase(category, level, scopeProvider, timestamp ?? DateTimeOffset.Now)
 {
 	private readonly Action<PreparedLogEntry> _handler
 		= handler ?? throw new ArgumentNullException(nameof(handler));

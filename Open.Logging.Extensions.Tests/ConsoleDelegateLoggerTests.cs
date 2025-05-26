@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Open.Logging.Extensions.Console;
 
 namespace Open.Logging.Extensions.Tests;
 

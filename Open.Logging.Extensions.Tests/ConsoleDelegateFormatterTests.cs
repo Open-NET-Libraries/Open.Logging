@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Open.Logging.Extensions.Console;
 
 namespace Open.Logging.Extensions.Tests;
 
@@ -15,7 +16,7 @@ public class ConsoleDelegateFormatterTests
 
 		var formatter = new ConsoleDelegateFormatter(
 			"test-formatter",
-			(writer, entry) =>
+			(entry, writer) =>
 			{
 				capturedWriter = writer;
 				capturedEntry = entry;
@@ -50,7 +51,7 @@ public class ConsoleDelegateFormatterTests
 
 		var formatter = new ConsoleDelegateFormatter(
 			"test-formatter",
-			(writer, entry) =>
+			(entry, writer) =>
 			{
 				capturedEntry = entry;
 				writer.Write($"Scopes: {entry.Scopes.Count}");
@@ -90,7 +91,7 @@ public class ConsoleDelegateFormatterTests
 
 		var formatter = new ConsoleDelegateFormatter(
 			"test-formatter",
-			(writer, entry) =>
+			(entry, writer) =>
 			{
 				capturedEntry = entry;
 				writer.Write(entry.Exception?.Message ?? "No exception");
@@ -122,7 +123,7 @@ public class ConsoleDelegateFormatterTests
 
 		var formatter = new ConsoleDelegateFormatter(
 			"test-formatter",
-			(writer, entry) =>
+			(entry, writer) =>
 			{
 				handlerInvoked = true;
 				writer.Write("Handler invoked");
@@ -205,6 +206,6 @@ public class ConsoleDelegateFormatterTests
 	{
 		// Act & Assert
 		Assert.Throws<ArgumentNullException>(() =>
-			new ConsoleDelegateFormatter("test-formatter", (Action<TextWriter, PreparedLogEntry>)null!));
+			new ConsoleDelegateFormatter("test-formatter", (Action<PreparedLogEntry, TextWriter>)null!));
 	}
 }

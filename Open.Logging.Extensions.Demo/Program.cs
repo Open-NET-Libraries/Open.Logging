@@ -47,8 +47,8 @@ internal static class Program
 		}
 		else
 		{
-			Console.WriteLine($"Unknown command: {args[0]}");
-			Console.WriteLine("Available commands: file, rolling, test, menu");
+			System.Console.WriteLine($"Unknown command: {args[0]}");
+			System.Console.WriteLine("Available commands: file, rolling, test, menu");
 			return 1;
 		}
 	}    /// <summary>
@@ -70,7 +70,7 @@ internal static class Program
 
 		while (true)
 		{
-			Console.Clear();
+			System.Console.Clear();
 			AnsiConsole.Write(
 				new FigletText("Open.Logging")
 					.Color(Color.Green)
@@ -115,9 +115,9 @@ internal static class Program
 	/// </summary>
 	private static void PauseForUser()
 	{
-		Console.WriteLine();
-		Console.WriteLine("Press any key to return to the menu...");
-		Console.ReadKey(true);
+		System.Console.WriteLine();
+		System.Console.WriteLine("Press any key to return to the menu...");
+		System.Console.ReadKey(true);
 	}
 
 	/// <summary>
@@ -200,14 +200,14 @@ internal static class Program
 		// Get available themes
 		var themes = new[]
 		{
-	("ModernColors", SpectreConsoleLogTheme.ModernColors),
-	("TweakedDefaults", SpectreConsoleLogTheme.TweakedDefaults),
-	("LightBackground", SpectreConsoleLogTheme.LightBackground),
-	("Dracula", SpectreConsoleLogTheme.Dracula),
-	("Monokai", SpectreConsoleLogTheme.Monokai),
-	("SolarizedDark", SpectreConsoleLogTheme.SolarizedDark),
-	("OneDark", SpectreConsoleLogTheme.OneDark)
-};
+			("ModernColors", SpectreConsoleLogTheme.ModernColors),
+			("TweakedDefaults", SpectreConsoleLogTheme.TweakedDefaults),
+			("LightBackground", SpectreConsoleLogTheme.LightBackground),
+			("Dracula", SpectreConsoleLogTheme.Dracula),
+			("Monokai", SpectreConsoleLogTheme.Monokai),
+			("SolarizedDark", SpectreConsoleLogTheme.SolarizedDark),
+			("OneDark", SpectreConsoleLogTheme.OneDark)
+		};
 
 		// Demonstrate each theme
 		foreach (var (themeName, theme) in themes)

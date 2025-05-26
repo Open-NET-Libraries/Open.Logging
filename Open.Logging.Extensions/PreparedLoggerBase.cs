@@ -4,27 +4,15 @@ using System.Diagnostics;
 namespace Open.Logging.Extensions;
 
 /// <summary>
-/// A base class for logging that handles log-levels and scopes.
+/// A base class for logging that handles log-levels and prepares log entries for writing.
 /// </summary>
-public abstract class ScopedLoggerBase(
-	LogLevel level,
+public abstract class PreparedLoggerBase(
 	string? category,
-	DateTimeOffset startTime,
-	IExternalScopeProvider? scopeProvider)
-	: LoggerBase
+	LogLevel minLogLevel,
+	IExternalScopeProvider? scopeProvider,
+	DateTimeOffset startTime)
+	: LoggerBase(category, minLogLevel, scopeProvider)
 {
-	private readonly string _category = category ?? string.Empty;
-
-	private readonly IExternalScopeProvider? _scopeProvider = scopeProvider;
-
-	/// <inheritdoc />
-	public override IDisposable? BeginScope<TState>(TState state)
-		=> _scopeProvider?.Push(state!);
-
-	/// <inheritdoc />
-	public override bool IsEnabled(LogLevel logLevel)
-		=> logLevel >= level;
-
 	/// <inheritdoc />
 	protected override void WriteLog<TState>(
 		LogLevel logLevel,
@@ -47,8 +35,8 @@ public abstract class ScopedLoggerBase(
 				EventId = eventId,
 				Message = message,
 				Exception = exception,
-				Scopes = _scopeProvider.CaptureScope(),
-				Category = _category
+				Scopes = CaptureScope(),
+				Category = Category
 			});
 		}
 		catch

@@ -12,13 +12,13 @@ internal static class FileLoggerRollingDemoProgram
 {
 	public static async Task RunAsync(string[] args)
 	{
-		Console.WriteLine("Running File Logger Rolling and Retention Demo");
-		Console.WriteLine("=============================================");
+		System.Console.WriteLine("Running File Logger Rolling and Retention Demo");
+		System.Console.WriteLine("=============================================");
 
 		var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs", "rolling_demo");
 		Directory.CreateDirectory(logDirectory);
 
-		Console.WriteLine($"Log files will be saved to: {logDirectory}");
+		System.Console.WriteLine($"Log files will be saved to: {logDirectory}");
 
 		// Clean previous logs for demo clarity
 		foreach (var file in Directory.GetFiles(logDirectory))
@@ -39,7 +39,7 @@ internal static class FileLoggerRollingDemoProgram
 		services.AddLogging(builder =>
 		{
 			// Configure file logger with small max file size to demonstrate rolling
-			builder.AddFile(options =>
+			builder.AddFileLog(options =>
 			{
 				options.LogDirectory = logDirectory;
 				options.FileNamePattern = "rolling_demo_{Timestamp:yyyyMMdd_HHmmss}.log";
@@ -55,7 +55,7 @@ internal static class FileLoggerRollingDemoProgram
 		var logger = loggerFactory.CreateLogger("FileLoggerRollingDemo");
 
 		// Demonstrate file rolling by writing logs with increasing size
-		Console.WriteLine("Writing logs to trigger file rolling...");
+		System.Console.WriteLine("Writing logs to trigger file rolling...");
 
 		for (int i = 1; i <= 10; i++)
 		{
@@ -82,12 +82,12 @@ internal static class FileLoggerRollingDemoProgram
 
 		// Show number of log files after the demo
 		var finalLogFiles = Directory.GetFiles(logDirectory, "*.log");
-		Console.WriteLine($"Demo complete. {finalLogFiles.Length} log files created (max 3 retained):");
+		System.Console.WriteLine($"Demo complete. {finalLogFiles.Length} log files created (max 3 retained):");
 
 		foreach (var file in finalLogFiles)
 		{
 			var fileInfo = new FileInfo(file);
-			Console.WriteLine($" - {Path.GetFileName(file)} ({fileInfo.Length:N0} bytes)");
+			System.Console.WriteLine($" - {Path.GetFileName(file)} ({fileInfo.Length:N0} bytes)");
 		}
 	}
 }

@@ -5,16 +5,17 @@ namespace Open.Logging.Extensions.Tests;
 
 public class LoggingBuilderExtensionsTests
 {
+	static void VoidHandler(PreparedLogEntry entry, TextWriter writer) { }
+
 	[Fact]
 	public void AddSpecializedConsoleFormatter_WithNullBuilder_ThrowsArgumentNullException()
 	{
 		// Arrange
 		ILoggingBuilder? nullBuilder = null;
-		static void handler(TextWriter writer, PreparedLogEntry entry) { }
 
 		// Act & Assert
 		var exception = Assert.Throws<ArgumentNullException>(() =>
-			nullBuilder!.AddConsoleDelegateFormatter("formatter", handler));
+			nullBuilder!.AddConsoleDelegateFormatter("formatter", VoidHandler));
 
 		Assert.Equal("builder", exception.ParamName);
 	}
@@ -24,11 +25,10 @@ public class LoggingBuilderExtensionsTests
 	{
 		// Arrange
 		var loggingBuilder = Substitute.For<ILoggingBuilder>();
-		static void handler(TextWriter writer, PreparedLogEntry entry) { }
 
 		// Act & Assert
 		var exception = Assert.Throws<ArgumentException>(() =>
-			loggingBuilder.AddConsoleDelegateFormatter("", handler));
+			loggingBuilder.AddConsoleDelegateFormatter("", VoidHandler));
 
 		Assert.Contains("Formatter name must be provided", exception.Message, StringComparison.Ordinal);
 	}
@@ -38,7 +38,7 @@ public class LoggingBuilderExtensionsTests
 	{
 		// Arrange
 		var loggingBuilder = Substitute.For<ILoggingBuilder>();
-		Action<TextWriter, PreparedLogEntry>? nullHandler = null;
+		Action<PreparedLogEntry, TextWriter>? nullHandler = null;
 
 		// Act & Assert
 		var exception = Assert.Throws<ArgumentNullException>(() =>
