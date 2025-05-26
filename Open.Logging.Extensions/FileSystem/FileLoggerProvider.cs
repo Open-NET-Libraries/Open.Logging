@@ -17,7 +17,7 @@ public sealed partial class FileLoggerProvider
 	, ILoggerProvider
 	, IAsyncDisposable
 {
-	private readonly FileFormatterOptions _options;
+	private readonly FileLoggerFormatterOptions _options;
 	private readonly TemplateTextLogEntryWriter _writer;
 	private readonly BufferedLogWriter<TextWriter> _bufferedWriter;
 	private readonly string _logFilePath;
@@ -35,7 +35,7 @@ public sealed partial class FileLoggerProvider
 	/// Initializes a new instance of the <see cref="FileLoggerProvider"/> class.
 	/// </summary>
 	/// <param name="options">The options for configuring the file logger.</param>
-	public FileLoggerProvider(IOptionsSnapshot<FileFormatterOptions> options)
+	public FileLoggerProvider(IOptionsSnapshot<FileLoggerFormatterOptions> options)
 	{
 		ArgumentNullException.ThrowIfNull(options);
 		_options = options.Value;

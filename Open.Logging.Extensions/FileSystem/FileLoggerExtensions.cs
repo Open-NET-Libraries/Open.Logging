@@ -22,9 +22,9 @@ public static class FileLoggerExtensions
 
 		builder.AddConfiguration();
 		builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());
-		builder.Services.TryAddSingleton<IConfigureOptions<FileFormatterOptions>, FileLoggerOptionsSetup>();
+		builder.Services.TryAddSingleton<IConfigureOptions<FileLoggerFormatterOptions>, FileLoggerOptionsSetup>();
 
-		LoggerProviderOptions.RegisterProviderOptions<FileFormatterOptions, FileLoggerProvider>(builder.Services);
+		LoggerProviderOptions.RegisterProviderOptions<FileLoggerFormatterOptions, FileLoggerProvider>(builder.Services);
 
 		return builder;
 	}
@@ -35,7 +35,7 @@ public static class FileLoggerExtensions
 	/// <param name="builder">The logging builder to add the file logger provider to.</param>
 	/// <param name="configure">A callback to configure the file logger options.</param>
 	/// <returns>The logging builder instance to enable method chaining.</returns>
-	public static ILoggingBuilder AddFileLogger(this ILoggingBuilder builder, Action<FileFormatterOptions> configure)
+	public static ILoggingBuilder AddFileLogger(this ILoggingBuilder builder, Action<FileLoggerFormatterOptions> configure)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		ArgumentNullException.ThrowIfNull(configure);
@@ -49,13 +49,13 @@ public static class FileLoggerExtensions
 	/// <summary>
 	/// Sets up default options for the file logger.
 	/// </summary>
-	private sealed class FileLoggerOptionsSetup : IConfigureOptions<FileFormatterOptions>
+	private sealed class FileLoggerOptionsSetup : IConfigureOptions<FileLoggerFormatterOptions>
 	{
 		/// <summary>
 		/// Configures the specified options.
 		/// </summary>
 		/// <param name="options">The options to configure.</param>
-		public void Configure(FileFormatterOptions options)
+		public void Configure(FileLoggerFormatterOptions options)
 		{
 			// Set default options here if needed (most are already set with default values in the class)
 			// This allows for override from configuration

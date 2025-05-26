@@ -3,7 +3,7 @@ namespace Open.Logging.Extensions.FileSystem;
 /// <summary>
 /// Options for configuring the file logger.
 /// </summary>
-public record FileFormatterOptions : TemplateFormatterOptions
+public record FileLoggerFormatterOptions : TemplateFormatterOptions
 {
 	/// <summary>
 	/// Gets or sets the directory where log files will be stored.
