@@ -16,6 +16,7 @@ public sealed class BufferedLogWriter<TWriter>
 	// Background processing task
 	private readonly Task _processingTask;
 	private readonly Action<PreparedLogEntry, TWriter> _handler;
+	private readonly Func<ValueTask>? _onFlushComplete;
 
 	/// <summary>
 	/// Creates a new buffered logger that delegates to the given writer
@@ -24,11 +25,13 @@ public sealed class BufferedLogWriter<TWriter>
 	/// <param name="startTime">Optional start time for the writer. Defaults to current time.</param>
 	/// <param name="bufferSize">Maximum size of the buffer.</param>
 	/// <param name="allowSynchronousContinuations">Configures whether or not the calling thread may participate in processing the log entries.</param>
+	/// <param name="onFlushComplete">Optional callback invoked when the buffer is flushed.</param>
 	public BufferedLogWriter(
 		Action<PreparedLogEntry, TWriter> handler,
 		DateTimeOffset? startTime = null,
 		int bufferSize = 10000,
-		bool allowSynchronousContinuations = false)
+		bool allowSynchronousContinuations = false,
+		Func<ValueTask>? onFlushComplete = null)
 		: base(startTime)
 	{
 		_handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -38,6 +41,8 @@ public sealed class BufferedLogWriter<TWriter>
 			.Create<(PreparedLogEntry entry, TWriter writer)>(
 				bufferSize, singleWriter: false, singleReader: true,
 				allowSynchronousContinuations);
+
+		_onFlushComplete = onFlushComplete;
 
 		// Start the background processing task
 		_processingTask = Task.Run(ProcessLogsAsync);
@@ -56,12 +61,18 @@ public sealed class BufferedLogWriter<TWriter>
 	}
 
 	/// <summary>
-	/// Processes log messages from the channel asynchronously
+	/// Flushes the buffered log messages to the handler synchronously.
 	/// </summary>
-	private async Task ProcessLogsAsync()
+	public async ValueTask FlushAsync(CancellationToken cancellationToken = default)
 	{
-		await foreach (var (entry, writer) in _logChannel.Reader.ReadAllAsync().ConfigureAwait(false))
+		if (cancellationToken.IsCancellationRequested)
+			return;
+
+		bool consumed = false;
+		while (_logChannel.Reader.TryRead(out var e))
 		{
+			consumed = true;
+			var (entry, writer) = e;
 			try
 			{
 				_handler(entry, writer);
@@ -70,6 +81,24 @@ public sealed class BufferedLogWriter<TWriter>
 			{
 				Debug.Fail($"The log handler threw an exception: {ex}");
 			}
+
+			if (cancellationToken.IsCancellationRequested)
+				break;
+		}
+
+		if (consumed && _onFlushComplete is not null)
+			await _onFlushComplete().ConfigureAwait(false);
+	}
+
+	/// <summary>
+	/// Processes log messages from the channel asynchronously
+	/// </summary>
+	private async Task ProcessLogsAsync()
+	{
+		while (await _logChannel.Reader.WaitToReadAsync().ConfigureAwait(false))
+		{
+			await FlushAsync().ConfigureAwait(false);
+			await Task.Yield(); // Yield to allow other tasks to run
 		}
 	}
 

@@ -22,8 +22,4 @@
 	  <ProjectReference Include="..\Open.Logging.Extensions.SpectreConsole\Open.Logging.Extensions.SpectreConsole.csproj" />
 	</ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
-
 </Project>
