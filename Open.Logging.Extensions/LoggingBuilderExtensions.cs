@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Open.Logging.Extensions.Console;
 
 namespace Open.Logging.Extensions;
 
@@ -15,7 +16,7 @@ public static class LoggingBuilderExtensions
 	public static ILoggingBuilder AddConsoleDelegateFormatter(
 		this ILoggingBuilder builder,
 		string name,
-		Action<TextWriter, PreparedLogEntry> handler,
+		Action<PreparedLogEntry, TextWriter> handler,
 		DateTimeOffset? timestamp = null,
 		bool synchronize = false)
 	{
@@ -49,7 +50,7 @@ public static class LoggingBuilderExtensions
 		return builder;
 	}
 
-	/// <inheritdoc cref="AddConsoleDelegateFormatter(ILoggingBuilder, string, Action{TextWriter, PreparedLogEntry}, DateTimeOffset?, bool)"/>
+	/// <inheritdoc cref="AddConsoleDelegateFormatter(ILoggingBuilder, string, Action{PreparedLogEntry, TextWriter}, DateTimeOffset?, bool)"/>
 	public static ILoggingBuilder AddConsoleDelegateFormatter(
 		this ILoggingBuilder builder,
 		string name,
@@ -58,6 +59,6 @@ public static class LoggingBuilderExtensions
 		bool synchronize = false)
 		=> AddConsoleDelegateFormatter(
 			builder, name,
-			handler is null ? null! : (_, e) => handler(e),
+			handler is null ? null! : (e, _) => handler(e),
 			timestamp, synchronize);
 }

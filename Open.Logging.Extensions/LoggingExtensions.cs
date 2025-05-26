@@ -137,5 +137,4 @@ public static class LoggingExtensions
 		// Return with properly quoted path + line number
 		return $"{inPrefix}\"{filePath}{lineNumberPart}\"";
 	}
-
 }

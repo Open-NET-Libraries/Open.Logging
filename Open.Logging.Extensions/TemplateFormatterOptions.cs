@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Frozen;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Open.Logging.Extensions;
@@ -10,17 +11,15 @@ namespace Open.Logging.Extensions;
 [System.Diagnostics.CodeAnalysis.SuppressMessage(
 	"Style", "IDE0032:Use auto property",
 	Justification = "Specialized setters.")]
-public record ConsoleTemplateFormatterOptions
+public record TemplateFormatterOptions
 {
 	/// <summary>
-	/// The logger name.
+	/// The time when the application started logging.
 	/// </summary>
-	public string Name => $"[{nameof(ConsoleTemplateFormatter)}]{_template}";
-
-	/// <summary>
-	/// The beginning timestamp for the logs.
-	/// </summary>
-	public DateTimeOffset Timestamp { get; set; } = DateTimeOffset.Now;
+	/// <remarks>
+	/// Is used to calculate the elapsed time for log entries.
+	/// </remarks>
+	public DateTimeOffset StartTime { get; set; } = DateTimeOffset.Now;
 
 	private string _template = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
 	/// <summary>
@@ -112,4 +111,22 @@ public record ConsoleTemplateFormatterOptions
 	/// Gets a read-only dictionary that maps tokens to their corresponding integer values.
 	/// </summary>
 	internal static readonly FrozenDictionary<string, int> TokenMap = GetTokenMap().ToFrozenDictionary();
+
+	/// <summary>
+	/// Formats the scopes for logging in a simple separator first format.
+	/// </summary>
+	public string FormatScopes(IReadOnlyList<object> scopes)
+	{
+		if (scopes is null || scopes.Count == 0) return string.Empty;
+		if (scopes.Count == 1) return ScopesSeparator + scopes[0];
+
+		var sb = new StringBuilder();
+		foreach (var scope in scopes)
+		{
+			sb.Append(ScopesSeparator);
+			sb.Append(scope);
+		}
+
+		return sb.ToString();
+	}
 }

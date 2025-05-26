@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Open.Logging.Extensions;
 
 /// <summary>
 /// A prepared log entry that is ready to be formatted and written to a log target.
+/// This is the canonical representation of a log entry that contains all necessary information for formatting, processing, and structured logging.
 /// </summary>
 public readonly record struct PreparedLogEntry
 {
@@ -46,7 +48,6 @@ public readonly record struct PreparedLogEntry
 	/// The message for the log entry
 	/// </summary>
 	public string Message { get; init; } = string.Empty;
-
 	/// <summary>
 	/// The exception details for the log entry, if any
 	/// </summary>
@@ -58,4 +59,25 @@ public readonly record struct PreparedLogEntry
 	/// <returns></returns>
 	public TimeSpan Elapsed
 		=> DateTimeOffset.Now - StartTime;
+
+	/// <summary>
+	/// An indication of whether this log entry is has any content that can be written.
+	/// </summary>
+	public bool HasContent
+		=> !string.IsNullOrWhiteSpace(Message) || Exception is not null;
+
+	/// <summary>
+	/// Creates a <see cref="PreparedLogEntry"/> from a <see cref="LogEntry{TState}"/>.
+	/// </summary>
+	public static PreparedLogEntry From<TState>(LogEntry<TState> logEntry, DateTimeOffset startTime, IExternalScopeProvider? scopeProvider = null) => new()
+	{
+		StartTime = startTime,
+		Timestamp = DateTimeOffset.Now,
+		Level = logEntry.LogLevel,
+		Category = logEntry.Category,
+		EventId = logEntry.EventId,
+		Scopes = scopeProvider.CaptureScope(),
+		Message = logEntry.Formatter?.Invoke(logEntry.State, logEntry.Exception) ?? string.Empty,
+		Exception = logEntry.Exception
+	};
 }

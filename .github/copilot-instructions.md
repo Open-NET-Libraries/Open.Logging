@@ -59,6 +59,7 @@ Use modern C# features like:
 
 - Follow the rules from `.editorconfig`.
 - Make sure to put an extra line after closing braces.
+- Use primary constructors when possible.
 - Use expressive, intention-revealing names (no abbreviations)
 - Public interfaces must include XML documentation (`///`)
 - Use fluent APIs where appropriate to improve readability
@@ -96,6 +97,7 @@ public class Example
 - Avoid modifying `.editorconfig`, `.github/`, or directives without explicit instruction
 - If you're unsure about a design decision, generate a draft and ask for confirmation
 - Write tests alongside any new code — test-first is encouraged
+- Keep a set of development logs or "progress reports" to track changes and decisions.
 
 ---
 

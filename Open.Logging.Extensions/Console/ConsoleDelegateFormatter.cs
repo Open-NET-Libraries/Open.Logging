@@ -1,8 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging.Console;
+﻿using Open.Logging.Extensions.Writers;
 
-namespace Open.Logging.Extensions;
+namespace Open.Logging.Extensions.Console;
 
 /// <summary>
 /// A console formatter that uses a custom log handler to format and write log entries to a <see cref="TextWriter"/>.
@@ -13,9 +11,10 @@ namespace Open.Logging.Extensions;
 /// <inheritdoc cref="ConsoleDelegateFormatter(string, Action{PreparedLogEntry}, DateTimeOffset?)"/>
 public class ConsoleDelegateFormatter(
 	string name,
-	Action<TextWriter, PreparedLogEntry> logHandler,
+	Action<PreparedLogEntry, TextWriter> logHandler,
 	DateTimeOffset? timestamp = null)
-	: ConsoleFormatter(name)
+	: ConsoleFormatterBase(name, timestamp)
+	, ITextLogEntryWriter
 {
 	/// <summary>
 	/// Constructs a new instance of the <see cref="ConsoleDelegateFormatter"/> class.
@@ -27,34 +26,12 @@ public class ConsoleDelegateFormatter(
 		string name,
 		Action<PreparedLogEntry> logHandler,
 		DateTimeOffset? timestamp = null)
-		: this(name, logHandler is null ? null! : (_, e) => logHandler(e), timestamp) { }
+		: this(name, logHandler is null ? null! : (e, _) => logHandler(e), timestamp) { }
 
-	private readonly DateTimeOffset _timestamp
-		= timestamp ?? DateTimeOffset.Now;
-
-	private readonly Action<TextWriter, PreparedLogEntry> _logHandler
+	private readonly Action<PreparedLogEntry, TextWriter> _logHandler
 		= logHandler ?? throw new ArgumentNullException(nameof(logHandler));
 
 	/// <inheritdoc />
-	public override void Write<TState>(
-		in LogEntry<TState> logEntry,
-		IExternalScopeProvider? scopeProvider,
-		TextWriter textWriter)
-	{
-		string message = logEntry.Formatter?.Invoke(logEntry.State, logEntry.Exception) ?? "";
-
-		if (message.AsSpan().Trim().Length == 0 && logEntry.Exception is null)
-			return;
-
-		_logHandler(textWriter, new PreparedLogEntry
-		{
-			EventId = logEntry.EventId,
-			StartTime = _timestamp,
-			Level = logEntry.LogLevel,
-			Category = logEntry.Category,
-			Scopes = scopeProvider.CaptureScope(),
-			Message = message,
-			Exception = logEntry.Exception,
-		});
-	}
+	public override void Write(in PreparedLogEntry entry, TextWriter writer)
+		=> _logHandler(entry, writer);
 }

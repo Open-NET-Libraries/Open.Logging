@@ -8,13 +8,15 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Console" Version="9.0.5" />
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Primitives" Version="9.0.5" />
     <PackageVersion Include="Open.AsyncToolkit.BlobStorage" Version="1.0.5" />
+    <PackageVersion Include="Open.Disposable" Version="3.0.1" />
     <PackageVersion Include="Open.Disposable.ObjectPools" Version="3.0.2" />
     <PackageVersion Include="Open.Text" Version="9.0.0" />
     <PackageVersion Include="Spectre.Console" Version="0.50.0" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.50.0" />
-    <PackageVersion Include="System.Threading.Channels" Version="9.0.0" />
+    <PackageVersion Include="System.Threading.Channels" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.5" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.0" />

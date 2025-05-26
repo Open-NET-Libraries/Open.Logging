@@ -1,0 +1,123 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
+using Microsoft.Extensions.Logging.Console;
+using Open.Logging.Extensions.Formatters;
+using Open.Logging.Extensions.Writers;
+using System.Text;
+
+namespace Open.Logging.Extensions;
+
+/// <summary>
+/// Extension methods for configuring unified logging.
+/// </summary>
+public static class UnifiedLoggingBuilderExtensions
+{
+    /// <summary>
+    /// Adds a unified console logger that uses the specified formatter and sink infrastructure.
+    /// </summary>
+    /// <param name="builder">The logging builder.</param>
+    /// <param name="formatter">The formatter to use.</param>
+    /// <param name="minimumLevel">The minimum level to log.</param>
+    /// <param name="bufferSize">The buffer size for the sink.</param>
+    /// <param name="configure">Optional action to configure the formatter.</param>
+    /// <returns>The logging builder.</returns>
+    public static ILoggingBuilder AddUnifiedConsole(
+        this ILoggingBuilder builder,
+        ConsoleFormatter formatter,
+        LogLevel minimumLevel = LogLevel.Information,
+        int bufferSize = 10000,
+        Action<ConsoleFormatterOptions>? configure = null)
+    {
+        // Register the formatter with Microsoft's console logging
+        builder.AddConsole(options =>
+        {
+            options.FormatterName = formatter.Name;
+            
+            if (configure != null)
+            {
+                options.FormatterOptions = new ConsoleFormatterOptions();
+                configure(options.FormatterOptions);
+            }
+        });
+        
+        builder.AddConsoleFormatter(formatter, configure);
+
+        // Also register a sink-based logger using the same formatter
+        var sinkProvider = new SinkLoggerProvider(options =>
+        {
+            // Create a sink adapter that uses the formatter
+            var consoleSink = formatter.ToSink(
+                Console.Out, 
+                new LoggerExternalScopeProvider(),
+                minimumLevel,
+                bufferSize);
+                
+            options.AddSink(consoleSink);
+        });
+        
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(sinkProvider));
+
+        return builder;
+    }
+    
+    /// <summary>
+    /// Adds a unified console logger that uses a template formatter and sink infrastructure.
+    /// </summary>
+    /// <param name="builder">The logging builder.</param>
+    /// <param name="template">The template string to format log events with.</param>
+    /// <param name="minimumLevel">The minimum level to log.</param>
+    /// <param name="bufferSize">The buffer size for the sink.</param>
+    /// <returns>The logging builder.</returns>
+    public static ILoggingBuilder AddUnifiedConsole(
+        this ILoggingBuilder builder,
+        string template,
+        LogLevel minimumLevel = LogLevel.Information,
+        int bufferSize = 10000)
+    {
+        // Create a template formatter
+        var templateFormatter = FormatterExtensions.CreateTemplateFormatter(
+            template, 
+            "UnifiedTemplateFormatter");
+            
+        return builder.AddUnifiedConsole(templateFormatter, minimumLevel, bufferSize);
+    }
+
+    /// <summary>
+    /// Adds a template-based file logger that uses the sink infrastructure.
+    /// </summary>
+    /// <param name="builder">The logging builder.</param>
+    /// <param name="filePath">The path to the log file.</param>
+    /// <param name="template">The template string to format log events with.</param>
+    /// <param name="minimumLevel">The minimum level to log.</param>
+    /// <param name="bufferSize">The buffer size for the sink.</param>
+    /// <param name="append">Whether to append to an existing file.</param>
+    /// <returns>The logging builder.</returns>
+    public static ILoggingBuilder AddUnifiedFile(
+        this ILoggingBuilder builder,
+        string filePath,
+        string template,
+        LogLevel minimumLevel = LogLevel.Information,
+        int bufferSize = 10000,
+        bool append = true)
+    {
+        var formatter = new TemplateFormatter(template);
+        
+        var sinkProvider = new SinkLoggerProvider(options =>
+        {
+            var fileSink = new FileSink(
+                filePath, 
+                formatter,
+                minimumLevel: minimumLevel,
+                append: append,
+                bufferSize: bufferSize);
+                
+            options.AddSink(fileSink);
+        });
+        
+        builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(sinkProvider));
+        
+        return builder;
+    }
+}
