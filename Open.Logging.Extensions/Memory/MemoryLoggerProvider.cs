@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Open.Disposable;
 
 namespace Open.Logging.Extensions.Memory;
@@ -29,7 +30,12 @@ public interface IMemoryLoggerProvider : ILoggerProvider
 /// <summary>
 /// A logger provider that stores log entries in memory for testing purposes.
 /// </summary>
-public sealed class MemoryLoggerProvider
+/// <remarks>
+/// Creates a new memory logger provider with the specified options.
+/// </remarks>
+/// <param name="options">Configuration options for the memory logger.</param>
+public sealed class MemoryLoggerProvider(
+	MemoryLoggerOptions? options)
 	: DisposableBase
 	, IMemoryLoggerProvider
 {
@@ -42,18 +48,32 @@ public sealed class MemoryLoggerProvider
 	// Start time used for all loggers
 	private readonly DateTimeOffset _startTime = DateTimeOffset.Now;
 
+	// Configuration
+	private readonly MemoryLoggerOptions _options = options ?? new MemoryLoggerOptions();
+
 	/// <summary>
-	/// Creates a new memory logger provider.
+	/// Creates a new memory logger provider with default options.
 	/// </summary>
-	public MemoryLoggerProvider()
-	{
-	}
+	public MemoryLoggerProvider() : this(default(MemoryLoggerOptions)) { }
+
+	/// <summary>
+	/// Creates a new memory logger provider with the specified options.
+	/// </summary>
+	public MemoryLoggerProvider(IOptionsSnapshot<MemoryLoggerOptions> options)
+		: this(options?.Value) { }
 
 	/// <inheritdoc/>
 	public ILogger CreateLogger(string categoryName)
 	{
 		AssertIsAlive();
-		return new MemoryLogger(categoryName, _logEntries, _sync, _startTime);
+		return new MemoryLogger(
+			categoryName,
+			_logEntries,
+			_sync,
+			_startTime,
+			_options.MinLogLevel,
+			_options.IncludeScopes,
+			_options.MaxCapacity);
 	}
 
 	/// <inheritdoc/>
@@ -105,14 +125,24 @@ public sealed class MemoryLoggerProvider
 		string category,
 		List<PreparedLogEntry> logEntries,
 		Lock sync,
-		DateTimeOffset startTime)
-		: PreparedLoggerBase(category, LogLevel.Trace, new LoggerExternalScopeProvider(), startTime)
+		DateTimeOffset startTime,
+		LogLevel minLogLevel,
+		bool includeScope,
+		int maxCapacity)
+		: PreparedLoggerBase(category, minLogLevel, includeScope ? new LoggerExternalScopeProvider() : null, startTime)
 	{
 		/// <inheritdoc/>
 		protected override void WriteLog(PreparedLogEntry entry)
 		{
 			lock (sync)
 			{
+				// Apply capacity limit if configured
+				if (maxCapacity > 0 && logEntries.Count >= maxCapacity)
+				{
+					// Remove oldest entry to make room
+					logEntries.RemoveAt(0);
+				}
+
 				logEntries.Add(entry);
 			}
 		}

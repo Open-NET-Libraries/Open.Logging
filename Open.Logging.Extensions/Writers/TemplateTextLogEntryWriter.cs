@@ -9,6 +9,7 @@ public class TemplateTextLogEntryWriter(TemplateFormatterOptions options)
 	: TextLogEntryWriterBase(options?.StartTime)
 {
 	private readonly TemplateFormatterOptions _options = options with { };
+	private readonly LogLevelLabels _levelLabels = options.LevelLabels ?? LogLevelLabels.Default;
 
 	/// <summary>
 	/// Writes a prepared log entry to the TextWriter using the template.
@@ -25,7 +26,7 @@ public class TemplateTextLogEntryWriter(TemplateFormatterOptions options)
 			DateTimeOffset.Now - options.StartTime,
 			entry.Category,
 			options.FormatScopes(entry.Scopes),
-			options.LevelLabels.GetLabelForLevel(entry.Level),
+			_levelLabels.GetLabelForLevel(entry.Level),
 			entry.Message,
 			entry.Exception?.ToLogString(entry.Category) ?? string.Empty)
 			.AsSpan()

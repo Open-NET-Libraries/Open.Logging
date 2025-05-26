@@ -26,13 +26,15 @@ public record TemplateFormatterOptions
 	/// Gets or sets the template for formatting log entries.
 	/// </summary>
 	/// <remarks>
-	/// The template can include the following placeholders:
-	/// {Elapsed} - The time elapsed since the logger was started
-	/// {Category} - The logger category
-	/// {Scopes} - The log scopes
-	/// {Level} - The log level
-	/// {Message} - The log message
-	/// {Exception} - The exception details
+	/// The template can include the following placeholders:<br/>
+	/// 
+	/// <c>{Timestamp}</c> - The timestamp of the log entry<br/>
+	/// <c>{Elapsed}</c> - The time elapsed since the logger was started<br/>
+	/// <c>{Category}</c> - The logger category<br/>
+	/// <c>{Scopes}</c> - The log scopes<br/>
+	/// <c>{Level}</c> - The log level<br/>
+	/// <c>{Message}</c> - The log message<br/>
+	/// <c>{Exception}</c> - The exception details<br/>
 	/// </remarks>
 	public string Template
 	{
@@ -68,15 +70,16 @@ public record TemplateFormatterOptions
 	/// The format string for the template.
 	/// </summary>
 	public string TemplateFormatString { get; private set; }
-		= "{1:HH:mm:ss.fff} {2}{3}{0}[{4}]: {5}{6}";
+		= "{2:hh:mm:ss.fff} {3}{4}{0}[{5}]: {6}{0}{7}";
 
 	/// <summary>
 	/// Gets or sets custom labels for different log levels.
 	/// </summary>
 	/// <remarks>
 	/// These labels are used in the log output when the {Level} placeholder is used in the template.
+	/// The default labels will be used if this property is not set.
 	/// </remarks>
-	public LogLevelLabels LevelLabels { get; set; } = Defaults.LevelLabels;
+	public LogLevelLabels? LevelLabels { get; set; }
 
 	/// <summary>
 	/// Gets or sets the log level filter.
@@ -91,12 +94,13 @@ public record TemplateFormatterOptions
 	private enum Tokens
 	{
 		NewLine = 0,
-		Elapsed = 1,
-		Category = 2,
-		Scopes = 3,
-		Level = 4,
-		Message = 5,
-		Exception = 6,
+		Timestamp = 1,
+		Elapsed = 2,
+		Category = 3,
+		Scopes = 4,
+		Level = 5,
+		Message = 6,
+		Exception = 7,
 	}
 
 	private static IEnumerable<KeyValuePair<string, int>> GetTokenMap()

@@ -11,6 +11,31 @@ namespace Open.Logging.Extensions.Tests;
 /// </summary>
 public class FileLoggerTests
 {
+	private static void Cleanup(string file, string? directory = null)
+	{
+		try { File.Delete(file); }
+		catch { /* Ignore cleanup failures */ }
+
+		if (directory is null) return;
+
+		try { Directory.Delete(directory); }
+		catch { /* Ignore cleanup failures */ }
+	}
+
+	private static void Cleanup(IEnumerable<string> files, string? directory = null)
+	{
+		foreach (var file in files)
+		{
+			try { File.Delete(file); }
+			catch { /* Ignore cleanup failures */ }
+		}
+
+		if (directory is null) return;
+
+		try { Directory.Delete(directory); }
+		catch { /* Ignore cleanup failures */ }
+	}
+
 	[Fact]
 	public void AddFileLogger_RegistersProviderWithDI()
 	{
@@ -41,6 +66,67 @@ public class FileLoggerTests
 	}
 
 	[Fact]
+	public void FileLoggerProvider_Constructor_WithDefaultOptions_CreatesInstance()
+	{
+		// Act
+		using var provider = new FileLoggerProvider();
+
+		// Assert
+		Assert.NotNull(provider);
+		Assert.NotNull(provider.FilePath);
+		Assert.True(File.Exists(provider.FilePath));
+
+		// Clean up
+		Cleanup(provider.FilePath);
+	}
+
+	[Fact]
+	public void FileLoggerProvider_Constructor_WithOptions_CreatesInstance()
+	{
+		// Arrange
+		var options = new FileLoggerFormatterOptions
+		{
+			LogDirectory = Path.Combine(Path.GetTempPath(), "FileLoggerProviderTest"),
+			FileNamePattern = "test-options.log"
+		};
+
+		// Act
+		using var provider = new FileLoggerProvider(options);
+
+		// Assert
+		Assert.NotNull(provider);
+		Assert.Equal(Path.Combine(options.LogDirectory, "test-options.log"), provider.FilePath);
+		Assert.True(File.Exists(provider.FilePath));
+
+		// Clean up
+		Cleanup(provider.FilePath, options.LogDirectory);
+	}
+
+	[Fact]
+	public void FileLoggerProvider_Constructor_WithOptionsSnapshot_CreatesInstance()
+	{
+		// Arrange
+		var options = new FileLoggerFormatterOptions
+		{
+			LogDirectory = Path.Combine(Path.GetTempPath(), "FileLoggerProviderSnapshotTest"),
+			FileNamePattern = "test-snapshot.log"
+		};
+
+		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
+
+		// Act
+		using var provider = new FileLoggerProvider(optionsSnapshot);
+
+		// Assert
+		Assert.NotNull(provider);
+		Assert.Equal(Path.Combine(options.LogDirectory, "test-snapshot.log"), provider.FilePath);
+		Assert.True(File.Exists(provider.FilePath));
+
+		// Clean up
+		Cleanup(provider.FilePath, options.LogDirectory);
+	}
+
+	[Fact]
 	public async Task FileLogger_FormatsProperly()
 	{
 		// Arrange
@@ -62,10 +148,8 @@ public class FileLoggerTests
 			Template = "{Elapsed} {Category} {Scopes}\n[{Level}]: {Message}{NewLine}{Exception}"
 		};
 
-		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
-
 		// Act
-		using (var provider = new FileLoggerProvider(optionsSnapshot))
+		using (var provider = new FileLoggerProvider(options))
 		{
 			var logger = provider.CreateLogger("TestCategory");
 
@@ -93,12 +177,12 @@ public class FileLoggerTests
 		// Check core formatting elements
 		Assert.Contains("TestCategory", logContent, StringComparison.Ordinal);
 		Assert.Contains("> OuterScope > InnerScope", logContent, StringComparison.Ordinal);
-		Assert.Contains("[ERR!]", logContent, StringComparison.Ordinal);
+		Assert.Contains($"[{LogLevelLabels.Default.Error}]", logContent, StringComparison.Ordinal);
 		Assert.Contains("Error message", logContent, StringComparison.Ordinal);
 		Assert.Contains("Test exception", logContent, StringComparison.Ordinal);
 
 		// Clean up test file
-		File.Delete(testFilePath);
+		Cleanup(testFilePath, testOutputDir);
 	}
 
 	[Fact]
@@ -123,10 +207,8 @@ public class FileLoggerTests
 			Template = "[{Level}]: {Message}"
 		};
 
-		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
-
 		// Act
-		using (var provider = new FileLoggerProvider(optionsSnapshot))
+		using (var provider = new FileLoggerProvider(options))
 		{
 			var logger = provider.CreateLogger("TestCategory");
 
@@ -148,12 +230,12 @@ public class FileLoggerTests
 		var lines = logContent.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
 		Assert.Equal(3, lines.Length);
 
-		Assert.Equal("[INFO]: Info message 1", lines[0]);
-		Assert.Equal("[INFO]: Info message 2", lines[1]);
-		Assert.Equal("[WARN]: Warning message", lines[2]);
+		Assert.Equal($"[{LogLevelLabels.Default.Information}]: Info message 1", lines[0]);
+		Assert.Equal($"[{LogLevelLabels.Default.Information}]: Info message 2", lines[1]);
+		Assert.Equal($"[{LogLevelLabels.Default.Warning}]: Warning message", lines[2]);
 
 		// Clean up test file
-		File.Delete(testFilePath);
+		Cleanup(testFilePath, testOutputDir);
 	}
 
 	[Fact]
@@ -174,10 +256,8 @@ public class FileLoggerTests
 			MinLogLevel = LogLevel.Information,
 		};
 
-		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
-
 		// Act
-		using (var provider = new FileLoggerProvider(optionsSnapshot))
+		using (var provider = new FileLoggerProvider(options))
 		{
 			var logger = provider.CreateLogger("TestCategory");
 			logger.LogInformation("Test message");
@@ -194,8 +274,7 @@ public class FileLoggerTests
 		Assert.Single(logFiles);
 
 		// Clean up
-		File.Delete(logFiles[0]);
-		Directory.Delete(testOutputDir);
+		Cleanup(logFiles, testOutputDir);
 	}
 
 	[Fact]
@@ -222,10 +301,8 @@ public class FileLoggerTests
 			RollSizeKb = 1 // 1KB roll size for testing
 		};
 
-		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
-
 		// Act
-		using (var provider = new FileLoggerProvider(optionsSnapshot))
+		using (var provider = new FileLoggerProvider(options))
 		{
 			var logger = provider.CreateLogger("TestCategory");
 
@@ -248,12 +325,7 @@ public class FileLoggerTests
 		Assert.True(logFiles.Length >= 2, $"Expected at least 2 log files, but got {logFiles.Length}");
 
 		// Clean up
-		foreach (var file in logFiles)
-		{
-			File.Delete(file);
-		}
-
-		Directory.Delete(testOutputDir);
+		Cleanup(logFiles, testOutputDir);
 	}
 
 	private sealed class TestOptionsSnapshot<T>(T value)

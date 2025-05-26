@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -16,15 +17,26 @@ public static class FileLoggerBuilderExtensions
 	/// </summary>
 	/// <param name="builder">The logging builder to add the file logger provider to.</param>
 	/// <returns>The logging builder instance to enable method chaining.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
 	public static ILoggingBuilder AddFileLogger(this ILoggingBuilder builder)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 
 		builder.AddConfiguration();
-		builder.Services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());
-		builder.Services.TryAddSingleton<IConfigureOptions<FileLoggerFormatterOptions>, FileLoggerOptionsSetup>();
 
-		LoggerProviderOptions.RegisterProviderOptions<FileLoggerFormatterOptions, FileLoggerProvider>(builder.Services);
+		// Register the logger provider
+		builder.Services.TryAddEnumerable(
+			ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());
+
+		// Register options setup for configuration binding
+		builder.Services.TryAddSingleton<
+			IConfigureOptions<FileLoggerFormatterOptions>,
+			FileLoggerOptionsSetup>();
+
+		// Register options for the provider
+		LoggerProviderOptions.RegisterProviderOptions<
+			FileLoggerFormatterOptions,
+			FileLoggerProvider>(builder.Services);
 
 		return builder;
 	}
@@ -35,7 +47,10 @@ public static class FileLoggerBuilderExtensions
 	/// <param name="builder">The logging builder to add the file logger provider to.</param>
 	/// <param name="configure">A callback to configure the file logger options.</param>
 	/// <returns>The logging builder instance to enable method chaining.</returns>
-	public static ILoggingBuilder AddFileLogger(this ILoggingBuilder builder, Action<FileLoggerFormatterOptions> configure)
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+	public static ILoggingBuilder AddFileLogger(
+		this ILoggingBuilder builder,
+		Action<FileLoggerFormatterOptions> configure)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		ArgumentNullException.ThrowIfNull(configure);
@@ -47,18 +62,31 @@ public static class FileLoggerBuilderExtensions
 	}
 
 	/// <summary>
-	/// Sets up default options for the file logger.
+	/// Sets up default options for the file logger from configuration.
 	/// </summary>
-	private sealed class FileLoggerOptionsSetup : IConfigureOptions<FileLoggerFormatterOptions>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="FileLoggerOptionsSetup"/> class.
+	/// </remarks>
+	/// <param name="providerConfiguration">The provider configuration.</param>
+	/// <remarks>
+	/// Initializes a new instance of the <see cref="FileLoggerOptionsSetup"/> class.
+	/// </remarks>
+#pragma warning disable IDE0079 // Remove unnecessary suppression
+#pragma warning disable CA1812 // Avoid uninstantiated internal classes
+	private sealed class FileLoggerOptionsSetup(
+		ILoggerProviderConfiguration<FileLoggerProvider> providerConfiguration)
+		: IConfigureOptions<FileLoggerFormatterOptions>
 	{
 		/// <summary>
-		/// Configures the specified options.
+		/// Configures the specified options from configuration.
 		/// </summary>
 		/// <param name="options">The options to configure.</param>
 		public void Configure(FileLoggerFormatterOptions options)
 		{
-			// Set default options here if needed (most are already set with default values in the class)
-			// This allows for override from configuration
+			// Load settings from configuration
+			providerConfiguration.Configuration.Bind(options);
 		}
 	}
+#pragma warning restore CA1812 // Avoid uninstantiated internal classes
+#pragma warning restore IDE0079 // Remove unnecessary suppression
 }

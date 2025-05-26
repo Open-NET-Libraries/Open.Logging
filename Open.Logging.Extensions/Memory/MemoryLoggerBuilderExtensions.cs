@@ -1,5 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
 
 namespace Open.Logging.Extensions.Memory;
 
@@ -12,12 +14,38 @@ public static class MemoryLoggerBuilderExtensions
 	/// Adds a memory logger provider to the logging builder.
 	/// </summary>
 	/// <param name="builder">The logging builder to add the memory logger provider to.</param>
-	/// <returns>The memory logger provider that was added.</returns>
+	/// <returns>The logging builder instance to enable method chaining.</returns>
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
 	public static ILoggingBuilder AddMemoryLogger(this ILoggingBuilder builder)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
+
+		// Add configuration support
+		builder.AddConfiguration();
+
+		// Register the memory logger provider
 		builder.Services.TryAddSingleton<IMemoryLoggerProvider, MemoryLoggerProvider>();
+
+		return builder;
+	}
+
+	/// <summary>
+	/// Adds a memory logger provider to the logging builder with the specified options.
+	/// </summary>
+	/// <param name="builder">The logging builder to add the memory logger provider to.</param>
+	/// <param name="configure">A callback to configure memory logger options.</param>
+	/// <returns>The logging builder instance to enable method chaining.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+	public static ILoggingBuilder AddMemoryLogger(
+		this ILoggingBuilder builder,
+		Action<MemoryLoggerOptions> configure)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		ArgumentNullException.ThrowIfNull(configure);
+
+		builder.AddMemoryLogger();
+		builder.Services.Configure(configure);
+
 		return builder;
 	}
 }
