@@ -38,30 +38,28 @@ public class FileLoggerTests : FileLoggerTestBase
 
 		Assert.NotNull(provider);
 	}
-
 	[Fact]
 	public void FileLoggerProvider_Constructor_WithOptions_CreatesInstance()
 	{
 		// Arrange
 		using var context = CreateTestContext(nameof(FileLoggerProvider_Constructor_WithOptions_CreatesInstance));
 		var options = CreateOptions(context.Directory, "test-options.log");
-		var expectedFilePath = context.GetFilePath("test-options.log");
 
 		// Act
 		using var provider = new FileLoggerProvider(options);
 
 		// Assert
 		Assert.NotNull(provider);
-		Assert.True(File.Exists(expectedFilePath));
+		// File is only created when first log entry is written (lazy initialization)
+		var logger = provider.CreateLogger("TestCategory");
+		Assert.NotNull(logger);
 	}
-
 	[Fact]
 	public void FileLoggerProvider_Constructor_WithOptionsSnapshot_CreatesInstance()
 	{
 		// Arrange
 		using var context = CreateTestContext(nameof(FileLoggerProvider_Constructor_WithOptionsSnapshot_CreatesInstance));
 		var options = CreateOptions(context.Directory, "test-snapshot.log");
-		var expectedFilePath = context.GetFilePath("test-snapshot.log");
 		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerOptions>(options);
 
 		// Act
@@ -69,7 +67,9 @@ public class FileLoggerTests : FileLoggerTestBase
 
 		// Assert
 		Assert.NotNull(provider);
-		Assert.True(File.Exists(expectedFilePath));
+		// File is only created when first log entry is written (lazy initialization)
+		var logger = provider.CreateLogger("TestCategory");
+		Assert.NotNull(logger);
 	}
 	[Fact]
 	public async Task FileLogger_FormatsProperly()
@@ -261,22 +261,20 @@ public class FileLoggerTests : FileLoggerTestBase
 		var logFiles = Directory.GetFiles(context.Directory, "concurrent-test*.log");
 		Assert.True(logFiles.Length >= 1, "No log files were created");
 	}
-
 	/// <summary>
-	/// Test to verify that rapid file rolling operations don't cause deadlocks.
-	/// Uses timeout to detect if the operations hang.
+	/// Test to verify that entry-based stream recreation works without deadlocks.
 	/// </summary>
 	[Fact]
-	public async Task FileLogger_RapidFileRolling_DoesNotDeadlock()
+	public async Task FileLogger_EntryBasedStreamRecreation_DoesNotDeadlock()
 	{
 		// Arrange
-		using var context = CreateTestContext(nameof(FileLogger_RapidFileRolling_DoesNotDeadlock));
+		using var context = CreateTestContext(nameof(FileLogger_EntryBasedStreamRecreation_DoesNotDeadlock));
 		var options = CreateOptions(
 			context.Directory,
-			"rapid-rolling-test.log",
+			"stream-recreation-test.log",
 			"{Message}",
-			maxLogEntries: 1, // Small size to trigger rolling
-			bufferSize: 1);
+			maxLogEntries: 5, // Small size to trigger stream recreation
+			bufferSize: 10);
 
 		// Create a timeout cancellation token to detect deadlocks
 		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
@@ -285,16 +283,13 @@ public class FileLoggerTests : FileLoggerTestBase
 		var testTask = Task.Run(async () =>
 		{
 			using var provider = new FileLoggerProvider(options);
-			var logger = provider.CreateLogger("RapidRollingTestCategory");
+			var logger = provider.CreateLogger("StreamRecreationTestCategory");
 
-			// Log messages that should trigger multiple file rolls
-			for (int i = 0; i < 100; i++)
+			// Log messages that should trigger stream recreation
+			for (int i = 0; i < 20; i++)
 			{
 				timeoutCts.Token.ThrowIfCancellationRequested();
-
-				// Create large message to exceed roll size quickly
-				var largeMessage = new string('A', 500) + $" Message {i}";
-				logger.LogInformation("{LargeMessage}", largeMessage);
+				logger.LogInformation("Message {MessageNumber}", i);
 				// Small delay to allow file operations to process
 				await Task.Delay(10, timeoutCts.Token).ConfigureAwait(false);
 			}
@@ -308,12 +303,15 @@ public class FileLoggerTests : FileLoggerTestBase
 		}
 		catch (OperationCanceledException)
 		{
-			Assert.Fail("Test timed out - likely deadlock detected in rapid file rolling operations");
+			Assert.Fail("Test timed out - likely deadlock detected in stream recreation operations");
 		}
-
-		// Verify that multiple files were created due to rolling
-		var logFiles = Directory.GetFiles(context.Directory, "rapid-rolling-test*.log");
-		Assert.True(logFiles.Length >= 2, $"Expected multiple log files due to rolling, but got {logFiles.Length}");
+		// Verify that the log file was created and contains messages
+		var logFiles = Directory.GetFiles(context.Directory, "stream-recreation-test.log");
+		Assert.Single(logFiles);
+		
+		var logContent = await File.ReadAllTextAsync(logFiles[0]);
+		Assert.Contains("Message 0", logContent, StringComparison.Ordinal);
+		Assert.Contains("Message 19", logContent, StringComparison.Ordinal);
 	}
 
 	/// <summary>
@@ -338,16 +336,15 @@ public class FileLoggerTests : FileLoggerTestBase
 		var testTask = Task.Run(async () =>
 		{
 			var provider = new FileLoggerProvider(options);
-			var logger = provider.CreateLogger("DisposeTestCategory");
-
-			// Start a continuous logging task
+			var logger = provider.CreateLogger("DisposeTestCategory");			// Start a continuous logging task
 			var loggingTask = Task.Run(async () =>
 			{
 				try
 				{
 					for (int i = 0; i < 1000; i++)
 					{
-						timeoutCts.Token.ThrowIfCancellationRequested(); logger.LogInformation("Continuous logging message {Index} with data: {Data}",
+						timeoutCts.Token.ThrowIfCancellationRequested(); 
+						logger.LogInformation("Continuous logging message {Index} with data: {Data}",
 							i, new string('B', 100));
 						await Task.Delay(5, timeoutCts.Token).ConfigureAwait(false);
 					}
@@ -356,7 +353,15 @@ public class FileLoggerTests : FileLoggerTestBase
 				{
 					// Expected when provider is disposed
 				}
-			}, timeoutCts.Token);           // Let logging run for a bit
+				catch (System.Threading.Channels.ChannelClosedException)
+				{
+					// Expected when buffered writer channel is closed during dispose
+				}
+				catch (AggregateException ex) when (ex.InnerException is System.Threading.Channels.ChannelClosedException)
+				{
+					// Expected when channel closure is wrapped in AggregateException from Wait()
+				}
+			}, timeoutCts.Token);// Let logging run for a bit
 			await Task.Delay(200, timeoutCts.Token).ConfigureAwait(false);
 
 			// Dispose while logging is active

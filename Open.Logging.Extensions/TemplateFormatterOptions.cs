@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Frozen;
-using System.Globalization;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -9,8 +9,23 @@ namespace Open.Logging.Extensions;
 /// <summary>
 /// Options for configuring the file logger.
 /// </summary>
-public record TemplateFormatterOptions
+public partial record TemplateFormatterOptions
 {
+	/// <summary>
+	/// Gets a read-only dictionary that maps tokens to their corresponding integer values.
+	/// </summary>
+	internal static readonly FrozenDictionary<string, int> TokenMap
+		= GetTokenMap().ToFrozenDictionary();
+
+	private readonly static Regex TemplateTokenPattern
+		= new(@"\{(\w+)([,:][^}]+)?}", RegexOptions.Compiled | RegexOptions.NonBacktracking);
+
+	private const string DefaultTemplate
+		= "{Elapsed:hh:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
+
+	private static readonly string DefaultFormatString
+		= TemplateToFormatString(DefaultTemplate);
+
 	/// <summary>
 	/// The time when the application started logging.
 	/// </summary>
@@ -38,33 +53,82 @@ public record TemplateFormatterOptions
 		get => field;
 		set
 		{
-			ArgumentNullException.ThrowIfNull(value);
-			var formatString = TemplateTokenPattern.Replace(value, m =>
-			{
-				var token = m.Groups[1].Value;
-				var format = m.Groups[2].Value;
-				return TokenMap.TryGetValue(token, out var tokenValue)
-					? $"{{{tokenValue}{format ?? string.Empty}}}"
-					: m.Value;
-			});
-
-			// Validate the format string
-			_ = string.Format(
-				CultureInfo.InvariantCulture,
-				formatString,
-				Environment.NewLine,
-				DateTimeOffset.Now,
-				TimeSpan.FromSeconds(30),
-				nameof(TemplateFormatterOptions),
-				FormatScopes(["A", "B"]),
-				"WARN",
-				"The Message",
-				"The exception details.");
-
+			TemplateFormatString = TemplateToFormatString(value);
 			field = value;
-			TemplateFormatString = formatString;
 		}
-	} = "{Elapsed:HH:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
+	} = DefaultTemplate;
+
+	private static string TemplateToFormatString(string value)
+	{
+		ArgumentNullException.ThrowIfNull(value);
+
+		var formatString = TemplateTokenPattern.Replace(value, m =>
+		{
+			var token = m.Groups[1].Value;
+			var format = m.Groups[2].Value;
+			if (!TokenMap.TryGetValue(token, out var tokenValue))
+				return m.Value;
+
+			if (string.IsNullOrEmpty(format))
+			{
+				return $"{{{tokenValue}}}";
+			}
+
+			// Replace every colon with @"\:" after the first one.
+			var delimiter = format[0];
+			Debug.Assert(delimiter is ':' or ',');
+			var formatSpan = format.AsSpan(1);
+			if (formatSpan.Length == 0) return $"{{{tokenValue}}}"; // No format specified, just return the token.
+
+			var sb = new StringBuilder();
+			sb.Append('{').Append(tokenValue).Append(delimiter);
+			// Using the FormatExcapeCharacters regex, iterate through the segments in formatSpan and replace the unescaped characters.
+			var matches = FormatExcapeCharacters().EnumerateMatches(formatSpan);
+			if (matches.MoveNext())
+			{
+				var lastIndex = 0;
+				do
+				{
+					var match = matches.Current;
+					if (match.Index > lastIndex)
+					{
+						sb.Append(formatSpan.Slice(lastIndex, match.Index - lastIndex));
+					}
+
+					sb.Append('\\').Append(formatSpan.Slice(match.Index, match.Length));
+					lastIndex = match.Index + match.Length;
+				}
+				while (matches.MoveNext());
+
+				if (lastIndex < formatSpan.Length)
+				{
+					sb.Append(formatSpan.Slice(lastIndex)); // Append the remaining part of the format string
+				}
+			}
+			else
+			{
+				sb.Append(formatSpan);
+			}
+
+			sb.Append('}');
+			return sb.ToString();
+		});
+
+		// Validate the format string
+		_ = string.Format(
+			CultureInfo.InvariantCulture,
+			formatString,
+			Environment.NewLine,
+			DateTimeOffset.Now,
+			TimeSpan.FromSeconds(30),
+			nameof(TemplateFormatterOptions),
+			"> A > B",
+			"WARN",
+			"The Message",
+			"The exception details.");
+
+		return formatString;
+	}
 
 	/// <summary>
 	/// Gets or sets the string used to separate log entries.
@@ -75,14 +139,10 @@ public record TemplateFormatterOptions
 	/// </remarks>
 	public string? EntrySeparator { get; set; } = Environment.NewLine;
 
-	private readonly static Regex TemplateTokenPattern
-		= new(@"\{(\w+)(:[^}]+)?}", RegexOptions.Compiled | RegexOptions.NonBacktracking);
-
 	/// <summary>
 	/// The format string for the template.
 	/// </summary>
-	public string TemplateFormatString { get; private set; }
-		= string.Empty;
+	public string TemplateFormatString { get; private set; } = DefaultFormatString;
 
 	/// <summary>
 	/// Gets or sets custom labels for different log levels.
@@ -124,11 +184,6 @@ public record TemplateFormatterOptions
 	}
 
 	/// <summary>
-	/// Gets a read-only dictionary that maps tokens to their corresponding integer values.
-	/// </summary>
-	internal static readonly FrozenDictionary<string, int> TokenMap = GetTokenMap().ToFrozenDictionary();
-
-	/// <summary>
 	/// Formats the scopes for logging in a simple separator first format.
 	/// </summary>
 	public string FormatScopes(IReadOnlyList<object> scopes)
@@ -145,4 +200,7 @@ public record TemplateFormatterOptions
 
 		return sb.ToString();
 	}
+
+	[GeneratedRegex(@"(?<!\\)[.:]", RegexOptions.Compiled)]
+	private static partial Regex FormatExcapeCharacters();
 }

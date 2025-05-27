@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Configuration;
-using Microsoft.Extensions.Options;
 
 namespace Open.Logging.Extensions.FileSystem;
 
@@ -28,12 +27,7 @@ public static class FileLoggerBuilderExtensions
 		builder.Services.TryAddEnumerable(
 			ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>());
 
-		// Register options setup for configuration binding
-		builder.Services.TryAddSingleton<
-			IConfigureOptions<FileLoggerOptions>,
-			FileLoggerOptionsSetup>();
-
-		// Register options for the provider
+		// Register options for the provider - this handles configuration binding automatically
 		LoggerProviderOptions.RegisterProviderOptions<
 			FileLoggerOptions,
 			FileLoggerProvider>(builder.Services);
@@ -60,27 +54,4 @@ public static class FileLoggerBuilderExtensions
 
 		return builder;
 	}
-
-	/// <summary>
-	/// Sets up default options for the file logger from configuration.
-	/// </summary>
-	/// <param name="providerConfiguration">The provider configuration.</param>
-#pragma warning disable IDE0079 // Remove unnecessary suppression
-#pragma warning disable CA1812 // Avoid uninstantiated internal classes
-	private sealed class FileLoggerOptionsSetup(
-		ILoggerProviderConfiguration<FileLoggerProvider> providerConfiguration)
-		: IConfigureOptions<FileLoggerOptions>
-	{
-		/// <summary>
-		/// Configures the specified options from configuration.
-		/// </summary>
-		/// <param name="options">The options to configure.</param>
-		public void Configure(FileLoggerOptions options)
-		{
-			// Load settings from configuration
-			providerConfiguration.Configuration.Bind(options);
-		}
-	}
-#pragma warning restore CA1812 // Avoid uninstantiated internal classes
-#pragma warning restore IDE0079 // Remove unnecessary suppression
 }

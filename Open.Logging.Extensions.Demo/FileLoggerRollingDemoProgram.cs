@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Open.Logging.Extensions.FileSystem;
 using System.Globalization;
 using System.Text;
 
@@ -10,7 +11,7 @@ namespace Open.Logging.Extensions.Demo;
 /// </summary>
 internal static class FileLoggerRollingDemoProgram
 {
-	public static async Task RunAsync(string[] args)
+	public static async Task RunAsync(string[] _)
 	{
 		System.Console.WriteLine("Running File Logger Rolling and Retention Demo");
 		System.Console.WriteLine("=============================================");
@@ -35,17 +36,15 @@ internal static class FileLoggerRollingDemoProgram
 
 		// Create service provider with file logger
 		var services = new ServiceCollection();
-
 		services.AddLogging(builder =>
 		{
-			// Configure file logger with small max file size to demonstrate rolling
-			builder.AddFileLog(options =>
+			// Configure file logger with small max entries to demonstrate rolling
+			builder.AddFileLogger(options =>
 			{
 				options.LogDirectory = logDirectory;
 				options.FileNamePattern = "rolling_demo_{Timestamp:yyyyMMdd_HHmmss}.log";
 				options.MinLogLevel = LogLevel.Debug;
-				options.MaxFileSize = 1024; // Very small size (1KB) to trigger rolling quickly
-				options.MaxRetainedFiles = 3; // Keep only the 3 most recent log files
+				options.MaxLogEntries = 5; // Small number to trigger rolling quickly
 			});
 
 			// Also log to console so we can see what's happening

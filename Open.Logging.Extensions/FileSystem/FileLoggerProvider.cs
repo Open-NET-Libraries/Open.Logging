@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Open.Disposable;
 using Open.Logging.Extensions.Writers;
@@ -7,6 +8,7 @@ namespace Open.Logging.Extensions.FileSystem;
 /// <summary>
 /// A file logger provider that writes logs to files with support for rolling based on log entry count.
 /// </summary>
+[ProviderAlias("FileLogger")]
 public sealed class FileLoggerProvider : FileLoggerProviderBase
 {
 	StreamManager _streamManager;

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Open.Logging.Extensions.FileSystem;
 using Spectre.Console;
 
 namespace Open.Logging.Extensions.Demo;
@@ -30,7 +31,7 @@ internal sealed class FileLoggerDemoProgram
 				// Add logging with file logger
 				services.AddLogging(builder =>
 				{
-					builder.AddFileLog(options =>
+					builder.AddFileLogger(options =>
 					{
 						options.LogDirectory = logDirectory;
 						options.FileNamePattern = fileNamePattern;
@@ -45,15 +46,12 @@ internal sealed class FileLoggerDemoProgram
 
 				// Create a logger factory and get a logger
 				var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-				var logger = loggerFactory.CreateLogger<FileLoggerDemoProgram>();
-
-				// Get the file logger provider to access the actual file path
-				var fileLoggerProvider = serviceProvider.GetServices<ILoggerProvider>()
-					.OfType<FileLoggerProvider>()
-					.FirstOrDefault();
-
-				// Store the actual file path for later display
-				actualLogFilePath = fileLoggerProvider?.FilePath ?? "Unknown";
+				var logger = loggerFactory.CreateLogger<FileLoggerDemoProgram>();				// Get expected log file path for display
+				var expectedFilePath = FileLoggerOptions.GetFormattedFilePath(
+					logDirectory, 
+					"demo_{Timestamp:yyyy-MM-dd}.log", 
+					false);
+				actualLogFilePath = expectedFilePath;
 
 				ctx.Status("Writing log entries...");
 

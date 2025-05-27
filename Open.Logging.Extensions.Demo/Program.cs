@@ -1,5 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Open.Logging.Extensions.FileSystem;
 using Open.Logging.Extensions.SpectreConsole;
 using Spectre.Console;
 
@@ -16,7 +19,7 @@ internal static class Program
 	public static async Task<int> Main(string[] args)
 	{
 		// Ensure args is not null
-		args ??= Array.Empty<string>();
+		args ??= [];
 
 		if (args.Length == 0)
 		{
@@ -41,6 +44,11 @@ internal static class Program
 			// Run the test demo
 			return await TestDemoAsync().ConfigureAwait(false);
 		}
+		else if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
+		{
+			// Run the configuration test demo
+			return await TestConfigurationAsync().ConfigureAwait(false);
+		}
 		else if (args[0].Equals("menu", StringComparison.OrdinalIgnoreCase))
 		{
 			return await ShowMainMenuAsync().ConfigureAwait(false);
@@ -48,7 +56,7 @@ internal static class Program
 		else
 		{
 			System.Console.WriteLine($"Unknown command: {args[0]}");
-			System.Console.WriteLine("Available commands: file, rolling, test, menu");
+			System.Console.WriteLine("Available commands: file, rolling, test, config, menu");
 			return 1;
 		}
 	}    /// <summary>
@@ -261,5 +269,77 @@ internal static class Program
 		PauseForUser();
 
 		return 0;
+	}   /// <summary>
+		/// Tests file logger configuration binding.
+		/// </summary>
+	private static Task<int> TestConfigurationAsync()
+	{
+		System.Console.WriteLine("Testing File Logger Configuration Binding...");
+		System.Console.WriteLine();
+
+		// Test different configuration section patterns
+		var testPatterns = new Dictionary<string, string>
+		{
+			["Logging:FileLogger"] = "FileLogger",
+			["Logging:FileLoggerProvider"] = "FileLoggerProvider",
+			["Logging:File"] = "File"
+		};
+
+		foreach (var pattern in testPatterns)
+		{
+			System.Console.WriteLine($"Testing configuration pattern: {pattern.Key}");
+			TestConfigurationPattern(pattern.Key, pattern.Value);
+			System.Console.WriteLine();
+		}
+
+		return Task.FromResult(0);
+	}
+
+	private static void TestConfigurationPattern(string configPrefix, string patternName)
+	{
+		// Create configuration
+		var path = Path.Combine(Path.GetTempPath(), $"ConfigTest_{patternName}");
+		var configValues = new Dictionary<string, string?>
+		{
+			[$"{configPrefix}:LogDirectory"] = path,
+			[$"{configPrefix}:FileNamePattern"] = $"config-test-{patternName}-{{Timestamp}}.log",
+			[$"{configPrefix}:MaxLogEntries"] = "10",
+		};
+
+		var configuration = new ConfigurationBuilder()
+			.AddInMemoryCollection(configValues)
+			.Build();
+
+		// Create services
+		var services = new ServiceCollection();
+		services.AddSingleton<IConfiguration>(configuration);
+
+		// Add logging with file logger and configuration
+		services.AddLogging(builder =>
+		{
+			builder.AddConfiguration(configuration.GetSection("Logging"));
+			builder.AddFileLogger();
+		});
+
+		var serviceProvider = services.BuildServiceProvider();
+
+		// Get and test the options
+		var options = serviceProvider.GetService<IOptions<FileLoggerOptions>>();
+		if (options == null)
+		{
+			System.Console.WriteLine($"❌ Failed: Could not get FileLoggerOptions from DI");
+			return;
+		}
+
+		var optionsValue = options.Value;
+
+		System.Console.WriteLine($"  Expected LogDirectory: {path}");
+		System.Console.WriteLine($"  Actual LogDirectory: {optionsValue.LogDirectory}");
+		System.Console.WriteLine($"  Match: {(optionsValue.LogDirectory == path ? "✅" : "❌")}");
+
+		if (optionsValue.LogDirectory == path)
+		{
+			System.Console.WriteLine($"  🎉 SUCCESS! Configuration pattern '{configPrefix}' works!");
+		}
 	}
 }
