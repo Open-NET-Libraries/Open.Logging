@@ -5,12 +5,8 @@ using Open.Logging.Extensions.Writers;
 namespace Open.Logging.Extensions.FileSystem;
 
 /// <summary>
-/// A simple file logger provider that writes logs to a single file.
-/// This provider does not support file rolling or retention policies.
+/// A file logger provider that writes logs to files with support for rolling based on log entry count.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="SingleFileLoggerProvider"/> class with the specified options.
-/// </remarks>
 public sealed class FileLoggerProvider : FileLoggerProviderBase
 {
 	StreamManager _streamManager;
@@ -18,7 +14,10 @@ public sealed class FileLoggerProvider : FileLoggerProviderBase
 	readonly Func<StreamWriter> _swFactory;
 	readonly int _maxLogEntries; // Default buffer size for the stream manager
 
-	/// <param name="options">The options for configuring the single file logger.</param>
+	/// <summary>
+	/// Initializes a new instance of the <see cref="FileLoggerProvider"/> class with options from the DI container.
+	/// </summary>
+	/// <param name="options">The options for configuring the file logger.</param>
 	public FileLoggerProvider(
 		FileLoggerOptions options) : base(options)
 	{
@@ -37,10 +36,7 @@ public sealed class FileLoggerProvider : FileLoggerProviderBase
 		_streamManager = new StreamManager(Formatter, _swFactory);
 	}
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="SingleFileLoggerProvider"/> class with options from the DI container.
-	/// </summary>
-	/// <param name="options">The options for configuring the single file logger.</param>
+	/// <inheritdoc cref="FileLoggerProvider(FileLoggerOptions)"/>
 	public FileLoggerProvider(
 		IOptionsSnapshot<FileLoggerOptions> options)
 		: this(options?.Value ?? new FileLoggerOptions()) { }

@@ -64,13 +64,7 @@ public static class FileLoggerBuilderExtensions
 	/// <summary>
 	/// Sets up default options for the file logger from configuration.
 	/// </summary>
-	/// <remarks>
-	/// Initializes a new instance of the <see cref="FileLoggerOptionsSetup"/> class.
-	/// </remarks>
 	/// <param name="providerConfiguration">The provider configuration.</param>
-	/// <remarks>
-	/// Initializes a new instance of the <see cref="FileLoggerOptionsSetup"/> class.
-	/// </remarks>
 #pragma warning disable IDE0079 // Remove unnecessary suppression
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
 	private sealed class FileLoggerOptionsSetup(

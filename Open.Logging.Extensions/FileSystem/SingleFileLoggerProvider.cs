@@ -7,9 +7,6 @@ namespace Open.Logging.Extensions.FileSystem;
 /// A simple file logger provider that writes logs to a single file.
 /// This provider does not support file rolling or retention policies.
 /// </summary>
-/// <remarks>
-/// Initializes a new instance of the <see cref="SingleFileLoggerProvider"/> class with the specified options.
-/// </remarks>
 public sealed class SingleFileLoggerProvider : FileLoggerProviderBase
 {
 	readonly Lazy<StreamWriter> _streamWriter;

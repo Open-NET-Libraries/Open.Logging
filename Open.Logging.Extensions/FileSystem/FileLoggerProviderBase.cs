@@ -16,7 +16,7 @@ public abstract class FileLoggerProviderBase
 	, ILoggerProvider
 {
 	private readonly DateTimeOffset _startTime;
-	[SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "<Pending>")]
+	[SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Disposed in OnDisposeAsync")]
 	private readonly BufferedLogEntryWriter _bufferedWriter;
 
 	/// <summary>
