@@ -64,20 +64,18 @@ public class FileLoggerBuilderExtensionsTests
 		Assert.Equal(5, optionsValue.MaxRetainedFiles);
 		Assert.Equal(2048, optionsValue.RollSizeKb);
 	}
-
 	[Fact]
 	public void AddFileLogger_WithConfiguration_ConfiguresOptions()
 	{
 		// Arrange
 		var path = Path.Combine(Path.GetTempPath(), "ConfigTestLogDir");
-
 		var configValues = new Dictionary<string, string?>
 		{
-			["Logging:FileSystem:LogDirectory"] = path,
-			["Logging:FileSystem:FileNamePattern"] = "config-test-{Timestamp}.log",
-			["Logging:FileSystem:MinLogLevel"] = "Warning",
-			["Logging:FileSystem:MaxRetainedFiles"] = "10",
-			["Logging:FileSystem:RollSizeKb"] = "4096"
+			["Logging:File:LogDirectory"] = path,
+			["Logging:File:FileNamePattern"] = "config-test-{Timestamp}.log",
+			["Logging:File:MinLogLevel"] = "Warning",
+			["Logging:File:MaxRetainedFiles"] = "10",
+			["Logging:File:RollSizeKb"] = "4096"
 		};
 
 		var configuration = new ConfigurationBuilder()

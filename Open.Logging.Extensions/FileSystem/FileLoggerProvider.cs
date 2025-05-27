@@ -19,22 +19,20 @@ public sealed partial class FileLoggerProvider
 	, IAsyncDisposable
 {
 	private readonly FileLoggerFormatterOptions _options;
-	private readonly TemplateTextLogEntryWriter _writer;
-	private readonly BufferedLogWriter<TextWriter> _bufferedWriter;
+	private readonly TemplateTextLogEntryWriter _formatter;
+	private readonly BufferedLogWriter _bufferedWriter;
 	private StreamWriter _fileWriter;
 	private readonly DateTimeOffset _startTime;
 	private readonly Lock _lock = new();
+
+	// _currentFilePath can't be readonly because it needs to be updated during file rolling
+	private string _currentFilePath; // Tracks the currently active log file path
 
 	// Regular expression to match placeholders in the file name pattern
 	private static readonly Regex PlaceholderRegex = FileNamePlaceholderPattern();
 
 	[GeneratedRegex(@"\{([^}]+)\}", RegexOptions.Compiled)]
 	private static partial Regex FileNamePlaceholderPattern();
-
-	/// <summary>
-	/// Gets the path to the current log file.
-	/// </summary>
-	public string FilePath { get; }
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="FileLoggerProvider"/> class with the specified options.
@@ -52,17 +50,15 @@ public sealed partial class FileLoggerProvider
 		// Apply file retention policy if configured
 		ApplyRetentionPolicy();
 
-		// Create the log file path
-		FilePath = GetFormattedFilePath();
-
-		// Create or open the log file
-		_fileWriter = File.AppendText(FilePath);
+		// Create the log file path and initialize the writer
+		_currentFilePath = GetFormattedFilePath();
+		_fileWriter = File.AppendText(_currentFilePath);
 
 		// Create the template writer
-		_writer = new TemplateTextLogEntryWriter(_options);
+		_formatter = new TemplateTextLogEntryWriter(_options);
 
 		// Create a buffered writer that uses the template writer to format logs
-		_bufferedWriter = new BufferedLogWriter<TextWriter>(
+		_bufferedWriter = new BufferedLogWriter(
 			WriteLogEntry,
 			_startTime,
 			_options.BufferSize,
@@ -121,10 +117,10 @@ public sealed partial class FileLoggerProvider
 	private void WriteLog(PreparedLogEntry entry)
 	{
 		// Use the buffered writer to handle the log entry
-		_bufferedWriter.Write(in entry, _fileWriter);
+		_bufferedWriter.Write(in entry);
 	}
 
-	private void WriteLogEntry(PreparedLogEntry entry, TextWriter writer)
+	private void WriteLogEntry(PreparedLogEntry entry)
 	{
 		// The ignored parameter is provided by the BufferedLogWriter but we use _fileWriter instead
 		try
@@ -135,7 +131,7 @@ public sealed partial class FileLoggerProvider
 				CheckAndRollFile();
 
 				// Use the template writer to write the log entry to the file writer
-				_writer.Write(in entry, writer);
+				_formatter.Write(in entry, _fileWriter);
 			}
 		}
 		catch (Exception)
@@ -183,7 +179,7 @@ public sealed partial class FileLoggerProvider
 		try
 		{
 			// Get the current file size
-			var fileInfo = new FileInfo(FilePath);
+			var fileInfo = new FileInfo(_currentFilePath);
 			if (!fileInfo.Exists || fileInfo.Length < _options.RollSizeKb * 1024)
 				return;
 
@@ -195,25 +191,28 @@ public sealed partial class FileLoggerProvider
 
 			// Create a new file name
 			var newLogFilePath = GetFormattedFilePath();
-			if (newLogFilePath == FilePath)
+			if (newLogFilePath == _currentFilePath)
 			{
 				// If the pattern doesn't result in a different file name,
 				// append a timestamp to make it unique
-				var directory = Path.GetDirectoryName(FilePath) ?? string.Empty;
-				var fileNameWithoutExt = Path.GetFileNameWithoutExtension(FilePath);
-				var extension = Path.GetExtension(FilePath);
+				var directory = Path.GetDirectoryName(_currentFilePath) ?? string.Empty;
+				var fileNameWithoutExt = Path.GetFileNameWithoutExtension(_currentFilePath);
+				var extension = Path.GetExtension(_currentFilePath);
 				var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture);
 				newLogFilePath = Path.Combine(directory, $"{fileNameWithoutExt}_{timestamp}{extension}");
 			}
 
 			// Move the old file to the new name
-			if (File.Exists(FilePath))
+			if (File.Exists(_currentFilePath))
 			{
-				File.Move(FilePath, newLogFilePath);
+				File.Move(_currentFilePath, newLogFilePath);
 			}
 
-			// Recreate the file writer with the original path
-			_fileWriter = File.AppendText(FilePath);
+			// Get a fresh path from the pattern (might be different than before due to timestamps)
+			_currentFilePath = GetFormattedFilePath();
+
+			// Create a new file writer for the new path
+			_fileWriter = File.AppendText(_currentFilePath);
 
 			// Apply retention policy after rolling
 			ApplyRetentionPolicy();
