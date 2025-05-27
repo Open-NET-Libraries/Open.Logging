@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Open.Logging.Extensions.FileSystem;
 using System.Globalization;
 
@@ -9,118 +8,8 @@ namespace Open.Logging.Extensions.Tests;
 /// <summary>
 /// Tests for the file logger provider.
 /// </summary>
-public class FileLoggerTests
+public class FileLoggerTests : FileLoggerTestBase
 {
-	private static readonly TimeSpan FileOperationDelay = TimeSpan.FromMilliseconds(100);
-
-	/// <summary>
-	/// Creates a test context with unique directory and file management.
-	/// </summary>
-	private static TestContext CreateTestContext(string testName)
-		=> new(testName);
-
-	/// <summary>
-	/// Creates options for file logging with common defaults.
-	/// </summary>
-	private static FileLoggerFormatterOptions CreateOptions(
-		string directory,
-		string fileName,
-		string? template = null,
-		LogLevel minLogLevel = LogLevel.Debug,
-		int? rollSizeKb = null,
-		int? bufferSize = null)
-	{
-		return new FileLoggerFormatterOptions
-		{
-			LogDirectory = directory,
-			FileNamePattern = fileName,
-			MinLogLevel = minLogLevel,
-			Template = template ?? "{Level}: {Message}",
-			RollSizeKb = rollSizeKb ?? 0,
-			BufferSize = bufferSize ?? 0
-		};
-	}   /// <summary>
-		/// Executes a test with a file logger provider and handles cleanup.
-		/// </summary>
-	private static async Task<string> ExecuteWithFileLogger(
-		FileLoggerFormatterOptions options,
-		Func<ILogger, Task> logAction)
-	{
-		using var provider = new FileLoggerProvider(options);
-		var logger = provider.CreateLogger("TestCategory");
-
-		await logAction(logger).ConfigureAwait(true);
-		await provider.DisposeAsync().ConfigureAwait(true);
-		await Task.Delay(FileOperationDelay).ConfigureAwait(true);
-
-		var expectedFilePath = Path.Combine(options.LogDirectory, options.FileNamePattern);
-		return expectedFilePath;
-	}
-
-	/// <summary>
-	/// Executes a test with a file logger provider (synchronous action) and handles cleanup.
-	/// </summary>
-	private static async Task<string> ExecuteWithFileLoggerSync(
-		FileLoggerFormatterOptions options,
-		Action<ILogger> logAction)
-	{
-		using var provider = new FileLoggerProvider(options);
-		var logger = provider.CreateLogger("TestCategory");
-
-		logAction(logger);
-		await provider.DisposeAsync().ConfigureAwait(true);
-		await Task.Delay(FileOperationDelay).ConfigureAwait(true);
-
-		var expectedFilePath = Path.Combine(options.LogDirectory, options.FileNamePattern);
-		return expectedFilePath;
-	}
-
-	/// <summary>
-	/// Manages test directory and file cleanup for a single test.
-	/// </summary>
-	private sealed class TestContext : IDisposable
-	{
-		public string Directory { get; }
-		public string TestName { get; }
-
-		public TestContext(string testName)
-		{
-			TestName = testName;
-			Directory = Path.Combine(Path.GetTempPath(), $"OpenLoggingFileLoggerTests_{testName}");
-			CleanupDirectory();
-			System.IO.Directory.CreateDirectory(Directory);
-		}
-
-		public string GetFilePath(string fileName) => Path.Combine(Directory, fileName);
-
-		public void CleanupFiles(string filePattern)
-		{
-			if (!System.IO.Directory.Exists(Directory)) return;
-
-			foreach (var file in System.IO.Directory.GetFiles(Directory, filePattern))
-			{
-				try { File.Delete(file); }
-				catch { /* Ignore cleanup failures */ }
-			}
-		}
-
-		private void CleanupDirectory()
-		{
-			if (!System.IO.Directory.Exists(Directory)) return;
-
-			try
-			{
-				System.IO.Directory.Delete(Directory, true);
-			}
-			catch { /* Ignore cleanup failures */ }
-		}
-
-		public void Dispose()
-		{
-			CleanupDirectory();
-		}
-	}
-
 	[Fact]
 	public void AddFileLogger_RegistersProviderWithDI()
 	{
@@ -149,6 +38,7 @@ public class FileLoggerTests
 
 		Assert.NotNull(provider);
 	}
+
 	[Fact]
 	public void FileLoggerProvider_Constructor_WithOptions_CreatesInstance()
 	{
@@ -172,7 +62,7 @@ public class FileLoggerTests
 		using var context = CreateTestContext(nameof(FileLoggerProvider_Constructor_WithOptionsSnapshot_CreatesInstance));
 		var options = CreateOptions(context.Directory, "test-snapshot.log");
 		var expectedFilePath = context.GetFilePath("test-snapshot.log");
-		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerFormatterOptions>(options);
+		var optionsSnapshot = new TestOptionsSnapshot<FileLoggerOptions>(options);
 
 		// Act
 		using var provider = new FileLoggerProvider(optionsSnapshot);
@@ -261,66 +151,6 @@ public class FileLoggerTests
 		var logFiles = Directory.GetFiles(context.Directory, $"unique-test-{uniqueId}-{expectedDatePart}.log");
 		Assert.Single(logFiles);
 	}
-	[Fact]
-	public async Task FileLogger_SizeBasedRolling_WorksCorrectly()
-	{
-		// Arrange
-		using var context = CreateTestContext(nameof(FileLogger_SizeBasedRolling_WorksCorrectly));
-		var testFilePath = context.GetFilePath("rolling-test.log");
-		context.CleanupFiles("rolling-test*.log");
-
-		var options = CreateOptions(
-			context.Directory,
-			"rolling-test.log",
-			"{Message}",
-			rollSizeKb: 1, // 1KB roll size for testing
-			bufferSize: 1);
-
-		var testData = new string('X', 500);
-		// Act
-		await ExecuteWithFileLogger(options, async logger =>
-		{
-			// Make the file much larger to ensure rolling happens
-			for (int i = 0; i < 20; i++)
-			{
-				// Add index to verify log order later
-				logger.LogInformation("TestData {Index}", $"{testData}-{i}");
-
-				// Give some time for I/O between logs
-				await Task.Delay(50).ConfigureAwait(true);
-			}
-		});
-
-		// Assert
-		var logFiles = Directory.GetFiles(context.Directory, "rolling-test*.log");
-		Assert.True(logFiles.Length >= 2, $"Expected at least 2 log files, but got {logFiles.Length}");
-
-		// Verify at least one rolled file exists (with timestamp)
-		var rolledFiles = logFiles.Where(f => f != testFilePath).ToList();
-		Assert.NotEmpty(rolledFiles);
-
-		// The current file should exist
-		Assert.True(File.Exists(testFilePath));
-
-		// Verify the current file has content (the last entries)
-		var currentContent = await File.ReadAllTextAsync(testFilePath);
-		Assert.NotEmpty(currentContent);
-
-		// Get content from the first rolled file
-		var rolledContent = await File.ReadAllTextAsync(rolledFiles[0]);
-		Assert.NotEmpty(rolledContent);
-
-		// Verify we have logging content distributed across the files
-		var combinedEntries = currentContent.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
-			.Concat(rolledContent.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries));
-		// Make sure we have entries from our test data
-		var allEntriesText = string.Join(Environment.NewLine, combinedEntries);
-		for (int i = 0; i < 10; i++)
-		{
-			// Check that the log contains our test data with index
-			Assert.Contains($"TestData {testData}-{i}", allEntriesText, StringComparison.Ordinal);
-		}
-	}
 
 	[Fact]
 	public async Task FileLogger_NonRolling_WritesToSameFile()
@@ -373,11 +203,187 @@ public class FileLoggerTests
 		Assert.Equal($"{LogLevelLabels.Default.Information}: Second batch message 9", lines[^1]);
 	}
 
-	private sealed class TestOptionsSnapshot<T>(T value)
-		: IOptionsSnapshot<T> where T : class, new()
+	/// <summary>
+	/// Test to verify that concurrent logging operations don't cause deadlocks.
+	/// Uses timeout to detect if the operations hang.
+	/// </summary>
+	[Fact]
+	public async Task FileLogger_ConcurrentLogging_DoesNotDeadlock()
 	{
-		public T Value { get; } = value;
+		// Arrange
+		using var context = CreateTestContext(nameof(FileLogger_ConcurrentLogging_DoesNotDeadlock));
+		var options = CreateOptions(
+			context.Directory,
+			"concurrent-test.log",
+			"{Message}",
+			maxLogEntries: 1, // Small size to trigger rolling
+			bufferSize: 1);
 
-		public T Get(string? name) => Value;
+		// Create a timeout cancellation token to detect deadlocks
+		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+		// Act & Assert - This should complete within the timeout
+		var testTask = Task.Run(async () =>
+		{
+			using var provider = new FileLoggerProvider(options);
+			var logger = provider.CreateLogger("ConcurrentTestCategory");
+
+			// Start multiple concurrent logging tasks
+			var tasks = new List<Task>();
+			for (int i = 0; i < 10; i++)
+			{
+				var taskIndex = i;
+				tasks.Add(Task.Run(async () =>
+				{
+					for (int j = 0; j < 50; j++)
+					{
+						timeoutCts.Token.ThrowIfCancellationRequested();
+						logger.LogInformation("Task {TaskIndex} Message {MessageIndex} with large data: {Data}",
+							taskIndex, j, new string('X', 200)); await Task.Delay(1, timeoutCts.Token).ConfigureAwait(false);
+					}
+				}, timeoutCts.Token));
+			}
+
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+			await provider.DisposeAsync().ConfigureAwait(false);
+		}, timeoutCts.Token);
+
+		try
+		{
+			await testTask.WaitAsync(timeoutCts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			Assert.Fail("Test timed out - likely deadlock detected in concurrent logging operations");
+		}
+
+		// Verify that files were created
+		var logFiles = Directory.GetFiles(context.Directory, "concurrent-test*.log");
+		Assert.True(logFiles.Length >= 1, "No log files were created");
+	}
+
+	/// <summary>
+	/// Test to verify that rapid file rolling operations don't cause deadlocks.
+	/// Uses timeout to detect if the operations hang.
+	/// </summary>
+	[Fact]
+	public async Task FileLogger_RapidFileRolling_DoesNotDeadlock()
+	{
+		// Arrange
+		using var context = CreateTestContext(nameof(FileLogger_RapidFileRolling_DoesNotDeadlock));
+		var options = CreateOptions(
+			context.Directory,
+			"rapid-rolling-test.log",
+			"{Message}",
+			maxLogEntries: 1, // Small size to trigger rolling
+			bufferSize: 1);
+
+		// Create a timeout cancellation token to detect deadlocks
+		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+		// Act & Assert - This should complete within the timeout
+		var testTask = Task.Run(async () =>
+		{
+			using var provider = new FileLoggerProvider(options);
+			var logger = provider.CreateLogger("RapidRollingTestCategory");
+
+			// Log messages that should trigger multiple file rolls
+			for (int i = 0; i < 100; i++)
+			{
+				timeoutCts.Token.ThrowIfCancellationRequested();
+
+				// Create large message to exceed roll size quickly
+				var largeMessage = new string('A', 500) + $" Message {i}";
+				logger.LogInformation("{LargeMessage}", largeMessage);
+				// Small delay to allow file operations to process
+				await Task.Delay(10, timeoutCts.Token).ConfigureAwait(false);
+			}
+
+			await provider.DisposeAsync().ConfigureAwait(false);
+		}, timeoutCts.Token);
+
+		try
+		{
+			await testTask.WaitAsync(timeoutCts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			Assert.Fail("Test timed out - likely deadlock detected in rapid file rolling operations");
+		}
+
+		// Verify that multiple files were created due to rolling
+		var logFiles = Directory.GetFiles(context.Directory, "rapid-rolling-test*.log");
+		Assert.True(logFiles.Length >= 2, $"Expected multiple log files due to rolling, but got {logFiles.Length}");
+	}
+
+	/// <summary>
+	/// Test to verify that dispose operations during active logging don't cause deadlocks.
+	/// Uses timeout to detect if the operations hang.
+	/// </summary>
+	[Fact]
+	public async Task FileLogger_DisposeWhileLogging_DoesNotDeadlock()
+	{
+		// Arrange
+		using var context = CreateTestContext(nameof(FileLogger_DisposeWhileLogging_DoesNotDeadlock));
+		var options = CreateOptions(
+			context.Directory,
+			"dispose-test.log",
+			"{Message}",
+			bufferSize: 100);
+
+		// Create a timeout cancellation token to detect deadlocks
+		using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+		// Act & Assert - This should complete within the timeout
+		var testTask = Task.Run(async () =>
+		{
+			var provider = new FileLoggerProvider(options);
+			var logger = provider.CreateLogger("DisposeTestCategory");
+
+			// Start a continuous logging task
+			var loggingTask = Task.Run(async () =>
+			{
+				try
+				{
+					for (int i = 0; i < 1000; i++)
+					{
+						timeoutCts.Token.ThrowIfCancellationRequested(); logger.LogInformation("Continuous logging message {Index} with data: {Data}",
+							i, new string('B', 100));
+						await Task.Delay(5, timeoutCts.Token).ConfigureAwait(false);
+					}
+				}
+				catch (ObjectDisposedException)
+				{
+					// Expected when provider is disposed
+				}
+			}, timeoutCts.Token);           // Let logging run for a bit
+			await Task.Delay(200, timeoutCts.Token).ConfigureAwait(false);
+
+			// Dispose while logging is active
+			await provider.DisposeAsync().ConfigureAwait(false);
+
+			// The logging task should complete or throw ObjectDisposedException
+			try
+			{
+				await loggingTask.WaitAsync(TimeSpan.FromSeconds(5), timeoutCts.Token).ConfigureAwait(false);
+			}
+			catch (TimeoutException)
+			{
+				// If logging task doesn't complete, that's also acceptable
+			}
+		}, timeoutCts.Token);
+
+		try
+		{
+			await testTask.WaitAsync(timeoutCts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			Assert.Fail("Test timed out - likely deadlock detected during dispose operations");
+		}
+
+		// Verify that some log file was created
+		var logFiles = Directory.GetFiles(context.Directory, "dispose-test*.log");
+		Assert.True(logFiles.Length >= 1, "No log files were created");
 	}
 }

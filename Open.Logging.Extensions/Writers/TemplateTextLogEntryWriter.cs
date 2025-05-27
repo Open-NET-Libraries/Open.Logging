@@ -1,14 +1,13 @@
-using System.Globalization;
-
 namespace Open.Logging.Extensions.Writers;
 
 /// <summary>
 /// A writer that formats log entries using a template string.
 /// </summary>
-public class TemplateTextLogEntryWriter(TemplateFormatterOptions options)
+public class TemplateTextLogEntryWriter(
+	TemplateFormatterOptions options)
 	: TextLogEntryWriterBase(options?.StartTime)
 {
-	private readonly TemplateFormatterOptions _options = options with { };
+	private readonly TemplateFormatterOptions _options = options with { ScopesSeparator = options.ScopesSeparator ?? "" };
 	private readonly LogLevelLabels _levelLabels = options.LevelLabels ?? LogLevelLabels.Default;
 
 	/// <summary>

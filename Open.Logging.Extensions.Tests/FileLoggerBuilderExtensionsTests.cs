@@ -28,7 +28,7 @@ public class FileLoggerBuilderExtensionsTests
 
 		Assert.NotNull(provider);
 
-		var options = serviceProvider.GetService<IOptions<FileLoggerFormatterOptions>>();
+		var options = serviceProvider.GetService<IOptions<FileLoggerOptions>>();
 		Assert.NotNull(options);
 		Assert.NotNull(options.Value);
 	}
@@ -47,22 +47,20 @@ public class FileLoggerBuilderExtensionsTests
 			options.LogDirectory = testDirectory;
 			options.FileNamePattern = testPattern;
 			options.MinLogLevel = LogLevel.Warning;
-			options.MaxRetainedFiles = 5;
-			options.RollSizeKb = 2048;
+			options.MaxLogEntries = 100;
 		}));
 
 		var serviceProvider = services.BuildServiceProvider();
 
 		// Assert
-		var options = serviceProvider.GetService<IOptions<FileLoggerFormatterOptions>>();
+		var options = serviceProvider.GetService<IOptions<FileLoggerOptions>>();
 		Assert.NotNull(options);
 
 		var optionsValue = options.Value;
 		Assert.Equal(testDirectory, optionsValue.LogDirectory);
 		Assert.Equal(testPattern, optionsValue.FileNamePattern);
 		Assert.Equal(LogLevel.Warning, optionsValue.MinLogLevel);
-		Assert.Equal(5, optionsValue.MaxRetainedFiles);
-		Assert.Equal(2048, optionsValue.RollSizeKb);
+		Assert.Equal(100, optionsValue.MaxLogEntries);
 	}
 	[Fact]
 	public void AddFileLogger_WithConfiguration_ConfiguresOptions()
@@ -74,8 +72,7 @@ public class FileLoggerBuilderExtensionsTests
 			["Logging:File:LogDirectory"] = path,
 			["Logging:File:FileNamePattern"] = "config-test-{Timestamp}.log",
 			["Logging:File:MinLogLevel"] = "Warning",
-			["Logging:File:MaxRetainedFiles"] = "10",
-			["Logging:File:RollSizeKb"] = "4096"
+			["Logging:File:MaxLogEntries"] = "10",
 		};
 
 		var configuration = new ConfigurationBuilder()
@@ -95,14 +92,13 @@ public class FileLoggerBuilderExtensionsTests
 		var serviceProvider = services.BuildServiceProvider();
 
 		// Assert
-		var options = serviceProvider.GetService<IOptions<FileLoggerFormatterOptions>>();
+		var options = serviceProvider.GetService<IOptions<FileLoggerOptions>>();
 		Assert.NotNull(options);
 
 		var optionsValue = options.Value;
 		Assert.Equal(path, optionsValue.LogDirectory);
 		Assert.Equal("config-test-{Timestamp}.log", optionsValue.FileNamePattern);
 		// Configuration-based MinLogLevel processing requires additional setup
-		Assert.Equal(10, optionsValue.MaxRetainedFiles);
-		Assert.Equal(4096, optionsValue.RollSizeKb);
+		Assert.Equal(10, optionsValue.MaxLogEntries);
 	}
 }

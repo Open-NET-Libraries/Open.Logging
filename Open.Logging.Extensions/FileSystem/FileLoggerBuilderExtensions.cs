@@ -30,12 +30,12 @@ public static class FileLoggerBuilderExtensions
 
 		// Register options setup for configuration binding
 		builder.Services.TryAddSingleton<
-			IConfigureOptions<FileLoggerFormatterOptions>,
+			IConfigureOptions<FileLoggerOptions>,
 			FileLoggerOptionsSetup>();
 
 		// Register options for the provider
 		LoggerProviderOptions.RegisterProviderOptions<
-			FileLoggerFormatterOptions,
+			FileLoggerOptions,
 			FileLoggerProvider>(builder.Services);
 
 		return builder;
@@ -50,7 +50,7 @@ public static class FileLoggerBuilderExtensions
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
 	public static ILoggingBuilder AddFileLogger(
 		this ILoggingBuilder builder,
-		Action<FileLoggerFormatterOptions> configure)
+		Action<FileLoggerOptions> configure)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		ArgumentNullException.ThrowIfNull(configure);
@@ -75,13 +75,13 @@ public static class FileLoggerBuilderExtensions
 #pragma warning disable CA1812 // Avoid uninstantiated internal classes
 	private sealed class FileLoggerOptionsSetup(
 		ILoggerProviderConfiguration<FileLoggerProvider> providerConfiguration)
-		: IConfigureOptions<FileLoggerFormatterOptions>
+		: IConfigureOptions<FileLoggerOptions>
 	{
 		/// <summary>
 		/// Configures the specified options from configuration.
 		/// </summary>
 		/// <param name="options">The options to configure.</param>
-		public void Configure(FileLoggerFormatterOptions options)
+		public void Configure(FileLoggerOptions options)
 		{
 			// Load settings from configuration
 			providerConfiguration.Configuration.Bind(options);

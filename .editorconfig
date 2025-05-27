@@ -287,3 +287,6 @@ dotnet_diagnostic.IDE0306.severity = silent
 dotnet_diagnostic.IDE0021.severity = silent
 dotnet_diagnostic.IDE0022.severity = silent
 dotnet_diagnostic.IDE0061.severity = silent
+
+# IDE0079: Remove unnecessary suppression
+dotnet_diagnostic.IDE0079.severity = none
