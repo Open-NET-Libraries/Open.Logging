@@ -183,7 +183,8 @@ public abstract class SpectreConsoleFormatterBase(
 
 		try
 		{
-			Writer.WriteException(exception);
+			Writer.Write(new ExceptionDisplay(exception));
+			Writer.WriteLine();
 		}
 		catch
 		{
