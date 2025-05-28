@@ -86,7 +86,9 @@ internal sealed class FileLoggerDemoProgram
 			});
 		// Display a summary of the log entries created
 
-		var pathText = new TextPath(actualLogFilePath);
+		var pathText = actualLogFilePath.Contains(' ', StringComparison.Ordinal)
+			? $"file:///{actualLogFilePath.Replace(" ", "%20", StringComparison.Ordinal).Replace('\\', '/')}"
+			: actualLogFilePath;
 
 		AnsiConsole.WriteLine();
 		AnsiConsole.Write(
@@ -95,14 +97,12 @@ internal sealed class FileLoggerDemoProgram
 				.AddRow($"[green]File logger demo completed[/]")
 				.AddRow($"Log directory: [yellow]{logDirectory.EscapeMarkup()}[/]")
 				.AddRow($"Log file pattern: [yellow]{fileNamePattern.EscapeMarkup()}[/]")
-				.AddRow($"Actual log file: [blue]{actualLogFilePath.EscapeMarkup()}[/]")
 				.BorderColor(Color.Green)
 		);
 
 		AnsiConsole.WriteLine();
-		AnsiConsole.Markup($"[bold]Log file location:[/] \"");
-		AnsiConsole.Write(pathText);
-		AnsiConsole.WriteLine("\"");
+		AnsiConsole.Markup($"[bold]Log file location:[/] ");
+		AnsiConsole.WriteLine(pathText);
 		AnsiConsole.Markup("[dim]You can copy and paste the path above to open the log file in your editor.[/]");
 		AnsiConsole.WriteLine();
 		AnsiConsole.WriteLine();
@@ -123,7 +123,7 @@ internal sealed class FileLoggerDemoProgram
 			{
 				AnsiConsole.MarkupLine($"[red]Could not read log file: {ex.Message}[/]");
 
-				// Fallback to showing the expected format
+				// Fall-back to showing the expected format
 				AnsiConsole.Markup("[bold]Expected log format:[/]");
 				AnsiConsole.WriteLine();
 
