@@ -13,7 +13,6 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// Initializes a new instance of the <see cref="ExceptionDisplay"/> class.
 /// </remarks>
 /// <param name="exception">The exception to display.</param>
-/// <param name="target">Optional <see cref="StringBuilder"/> to append to.
 internal sealed partial class ExceptionDisplay(Exception exception) : IRenderable
 {
 	private readonly Exception _exception = exception ?? throw new ArgumentNullException(nameof(exception));
