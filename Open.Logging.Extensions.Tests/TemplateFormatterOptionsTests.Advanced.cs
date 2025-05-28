@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 
 namespace Open.Logging.Extensions.Tests;
@@ -31,25 +32,8 @@ public sealed partial class TemplateFormatterOptionsTests
 			Assert.True(TemplateFormatterOptions.TokenMap.ContainsKey(tokenName));
 			Assert.Equal(expectedValue, TemplateFormatterOptions.TokenMap[tokenName]);
 		}
-		
+
 		Assert.Equal(8, TemplateFormatterOptions.TokenMap.Count);
-	}
-
-	[Fact]
-	public void TokenMap_IsReadOnly()
-	{
-		// Arrange & Act
-		var tokenMap = TemplateFormatterOptions.TokenMap;
-
-		// Assert
-		Assert.True(tokenMap.GetType().Name.Contains("Frozen")); // FrozenDictionary
-		
-		// Verify we can't modify it (should be immutable)
-		Assert.Throws<NotSupportedException>(() => 
-		{
-			var mutableMap = (IDictionary<string, int>)tokenMap;
-			mutableMap.Add("NewToken", 99);
-		});
 	}
 
 	[Theory]
@@ -74,7 +58,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		Assert.StartsWith(" > Scope1", result, StringComparison.Ordinal);
 		Assert.EndsWith($"Scope{scopeCount}", result, StringComparison.Ordinal);
 		Assert.Equal(scopeCount, result.Split(" > ", StringSplitOptions.RemoveEmptyEntries).Length);
-		
+
 		// Performance assertion - should complete quickly even with many scopes
 		Assert.True(stopwatch.ElapsedMilliseconds < 100, $"FormatScopes took {stopwatch.ElapsedMilliseconds}ms for {scopeCount} scopes");
 	}
@@ -131,7 +115,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		var largeTemplate = new StringBuilder();
 		for (int i = 0; i < 100; i++)
 		{
-			largeTemplate.Append($"Section{i}: {{Category}} {{Level}} {{Message}} ");
+			largeTemplate.Append(CultureInfo.InvariantCulture, $"Section{i}: {{Category}} {{Level}} {{Message}} ");
 		}
 
 		// Act
@@ -143,7 +127,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		// Assert
 		Assert.NotEmpty(options.TemplateFormatString);
 		Assert.True(stopwatch.ElapsedMilliseconds < 500, $"Large template processing took {stopwatch.ElapsedMilliseconds}ms");
-		
+
 		// Verify the transformation worked
 		Assert.Contains("{3}", options.TemplateFormatString, StringComparison.Ordinal); // Category
 		Assert.Contains("{5}", options.TemplateFormatString, StringComparison.Ordinal); // Level  

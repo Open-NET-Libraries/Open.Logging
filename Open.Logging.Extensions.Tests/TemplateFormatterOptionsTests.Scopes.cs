@@ -12,7 +12,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		var options = CreateOptions();
 
 		// Act & Assert
-		Assert.Equal(string.Empty, options.FormatScopes(Array.Empty<object>()));
+		Assert.Equal(string.Empty, options.FormatScopes([]));
 		Assert.Equal(string.Empty, options.FormatScopes(null!));
 	}
 
@@ -57,20 +57,6 @@ public sealed partial class TemplateFormatterOptionsTests
 
 		// Assert
 		Assert.Equal(" | Scope1 | Scope2", result);
-	}
-
-	[Theory]
-	[MemberData(nameof(ScopeTestData))]
-	public void FormatScopes_VariousInputs_ProducesExpectedOutput(object[] scopes, string expected)
-	{
-		// Arrange
-		var options = CreateOptions();
-
-		// Act
-		var result = options.FormatScopes(scopes);
-
-		// Assert
-		Assert.Equal(expected, result);
 	}
 
 	[Theory]

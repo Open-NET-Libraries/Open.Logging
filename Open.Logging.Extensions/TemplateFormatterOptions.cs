@@ -14,7 +14,7 @@ public partial record TemplateFormatterOptions
 	/// <summary>
 	/// Gets a read-only dictionary that maps tokens to their corresponding integer values.
 	/// </summary>
-	internal static readonly FrozenDictionary<string, int> TokenMap
+	public static readonly FrozenDictionary<string, int> TokenMap
 		= GetTokenMap().ToFrozenDictionary();
 
 	private readonly static Regex TemplateTokenPattern
