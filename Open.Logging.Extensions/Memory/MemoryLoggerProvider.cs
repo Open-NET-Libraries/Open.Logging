@@ -19,7 +19,7 @@ public interface IMemoryLoggerProvider : ILoggerProvider
 	/// Atomically swaps the internal list with a new one, returning the old list to the caller.
 	/// </summary>
 	/// <returns>The complete list of log entries captured up to this point.</returns>
-	IEnumerable<PreparedLogEntry> Drain();
+	IReadOnlyCollection<PreparedLogEntry> Drain();
 
 	/// <summary>
 	/// Clears all log entries from the memory logger.
@@ -88,7 +88,7 @@ public sealed class MemoryLoggerProvider(
 	}
 
 	/// <inheritdoc/>
-	public IEnumerable<PreparedLogEntry> Drain()
+	public IReadOnlyCollection<PreparedLogEntry> Drain()
 	{
 		lock (_sync)
 		{
