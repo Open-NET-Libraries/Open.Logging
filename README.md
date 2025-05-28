@@ -92,12 +92,6 @@ services.AddLogging(builder =>
 });
 ```
 
-## Documentation & Releases
-
-- **[Development History](dev-history/)** - Detailed release notes and migration guides
-- **[CHANGELOG.md](CHANGELOG.md)** - Summary of all changes
-- **[Multiple Loggers Guide](MULTIPLE_LOGGERS_GUIDE.md)** - Advanced multi-logger scenarios
-
 ## Requirements
 
 These may expand in the future.  If anyone needs legacy support, please fill out an request in the repo on GitHub.
