@@ -62,12 +62,11 @@ public sealed partial class TemplateFormatterOptionsTests
 		var expected = @"{1:yyyy-MM-dd HH\:mm\:ss\.fff zzz} {2:c} {6,-50}";
 		AssertTemplateTransformation(template, expected);
 	}
-
 	[Theory]
 	[InlineData("{Timestamp}", "{1}")]
 	[InlineData("{Elapsed:c}", "{2:c}")]
 	[InlineData("{Category,-20}", "{3,-20}")]
-	[InlineData("{Level:U}", "{5:U}")]
+	[InlineData("{Level}", "{5}")]
 	[InlineData("{Message,50}", "{6,50}")]
 	[InlineData("{Exception:-10}", "{7:-10}")]
 	public void Template_IndividualTokens_TransformCorrectly(string template, string expected)

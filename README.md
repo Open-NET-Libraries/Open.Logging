@@ -92,25 +92,6 @@ services.AddLogging(builder =>
 });
 ```
 
-### Buffered Logging
-
-For high-throughput applications:
-```cs
-using Open.Logging.Extensions;
-
-// Get logger from DI
-ILogger logger = serviceProvider.GetRequiredService<ILogger<MyService>>();
-
-// Create buffered logger
-BufferedLogger bufferedLogger = logger.AsBuffered();
-
-// Use with await using for automatic flushing
-await using (bufferedLogger)
-{
-    bufferedLogger.LogInformation("This will be buffered");
-}
-```
-
 ## Requirements
 
 These may expand in the future.  If anyone needs legacy support, please fill out an request in the repo on GitHub.

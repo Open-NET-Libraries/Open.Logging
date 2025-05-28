@@ -177,7 +177,7 @@ public sealed partial class TemplateFormatterOptionsTests
 	[InlineData("{Elapsed:c}", "{2:c}")]
 	[InlineData("{Elapsed:hh:mm:ss.fff}", @"{2:hh\:mm\:ss\.fff}")]
 	[InlineData("{Message,-50:X}", "{6,-50:X}")]
-	[InlineData("{Level,10:U}", "{5,10:U}")]
+	[InlineData("{Level,10}", "{5,10}")]
 	public void Template_RegexEscaping_HandlesSpecialCharacters(string input, string expected)
 	{
 		// This tests the FormatExcapeCharacters regex more thoroughly

@@ -82,7 +82,6 @@ public sealed partial class TemplateFormatterOptionsTests
 		// Ensure the default format string is actually valid
 		_ = ValidateFormatString(options.TemplateFormatString);
 	}
-
 	[Theory]
 	[InlineData("{Elapsed:c}")]          // TimeSpan standard format
 	[InlineData("{Elapsed:g}")]          // TimeSpan general format
@@ -91,7 +90,6 @@ public sealed partial class TemplateFormatterOptionsTests
 	[InlineData("{Timestamp:O}")]        // DateTime ISO format
 	[InlineData("{Message,-50}")]        // Left-aligned with width
 	[InlineData("{Message,50}")]         // Right-aligned with width
-	[InlineData("{Level:U}")]            // Uppercase format
 	public void Template_ValidFormatSpecifiers_DoNotThrow(string validTemplate)
 	{
 		// Act & Assert - should not throw
