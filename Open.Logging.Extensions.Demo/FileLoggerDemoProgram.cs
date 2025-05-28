@@ -46,10 +46,10 @@ internal sealed class FileLoggerDemoProgram
 
 				// Create a logger factory and get a logger
 				var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-				var logger = loggerFactory.CreateLogger<FileLoggerDemoProgram>();				// Get expected log file path for display
+				var logger = loggerFactory.CreateLogger<FileLoggerDemoProgram>();               // Get expected log file path for display
 				var expectedFilePath = FileLoggerOptions.GetFormattedFilePath(
-					logDirectory, 
-					"demo_{Timestamp:yyyy-MM-dd}.log", 
+					logDirectory,
+					fileNamePattern,
 					false);
 				actualLogFilePath = expectedFilePath;
 
@@ -83,7 +83,11 @@ internal sealed class FileLoggerDemoProgram
 				ctx.Status("Completing demo...");
 
 				// The service provider disposal will close the channel and flush all logs
-			});        // Display a summary of the log entries created
+			});
+		// Display a summary of the log entries created
+
+		var pathText = new TextPath(actualLogFilePath);
+
 		AnsiConsole.WriteLine();
 		AnsiConsole.Write(
 			new Table()
@@ -96,7 +100,9 @@ internal sealed class FileLoggerDemoProgram
 		);
 
 		AnsiConsole.WriteLine();
-		AnsiConsole.MarkupLine($"[bold]Log file location:[/] [underline blue]{actualLogFilePath.EscapeMarkup()}[/]");
+		AnsiConsole.Markup($"[bold]Log file location:[/] \"");
+		AnsiConsole.Write(pathText);
+		AnsiConsole.WriteLine("\"");
 		AnsiConsole.Markup("[dim]You can copy and paste the path above to open the log file in your editor.[/]");
 		AnsiConsole.WriteLine();
 		AnsiConsole.WriteLine();

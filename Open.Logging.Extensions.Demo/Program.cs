@@ -1,10 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
-using Open.Logging.Extensions.FileSystem;
-using Open.Logging.Extensions.SpectreConsole;
-using Spectre.Console;
+﻿using Open.Logging.Extensions.Demo.Commands;
+using Spectre.Console.Cli;
 
 namespace Open.Logging.Extensions.Demo;
 
@@ -12,334 +7,45 @@ namespace Open.Logging.Extensions.Demo;
 /// Main program entry point for the logging demos.
 /// </summary>
 internal static class Program
-{    /// <summary>
-	 /// Main entry point for the application.
-	 /// </summary>
-	 /// <param name="args">Command line arguments.</param>
-	public static async Task<int> Main(string[] args)
-	{
-		// Ensure args is not null
-		args ??= [];
+{
+    /// <summary>
+    /// Main entry point for the application.
+    /// </summary>
+    /// <param name="args">Command line arguments.</param>
+    public static async Task<int> Main(string[] args)
+    {
+        // Create the command app with MenuCommand as the default
+        var app = new CommandApp<MenuCommand>();
 
-		if (args.Length == 0)
-		{
-			// Show menu when no arguments provided
-			return await ShowMainMenuAsync().ConfigureAwait(false);
-		}
-		// Check for command line arguments
-		else if (args[0].Equals("file", StringComparison.OrdinalIgnoreCase))
-		{
-			// Run the file logger demo directly
-			FileLoggerDemoProgram.RunDemo();
-			return 0;
-		}
-		else if (args[0].Equals("rolling", StringComparison.OrdinalIgnoreCase))
-		{
-			// Run the file logger rolling demo directly
-			await FileLoggerRollingDemoProgram.RunAsync(args).ConfigureAwait(false);
-			return 0;
-		}
-		else if (args[0].Equals("test", StringComparison.OrdinalIgnoreCase))
-		{
-			// Run the test demo
-			return await TestDemoAsync().ConfigureAwait(false);
-		}
-		else if (args[0].Equals("config", StringComparison.OrdinalIgnoreCase))
-		{
-			// Run the configuration test demo
-			return await TestConfigurationAsync().ConfigureAwait(false);
-		}
-		else if (args[0].Equals("menu", StringComparison.OrdinalIgnoreCase))
-		{
-			return await ShowMainMenuAsync().ConfigureAwait(false);
-		}
-		else
-		{
-			System.Console.WriteLine($"Unknown command: {args[0]}");
-			System.Console.WriteLine("Available commands: file, rolling, test, config, menu");
-			return 1;
-		}
-	}    /// <summary>
-		 /// Helper function to show the main menu.
-		 /// </summary>
-	private static async Task<int> ShowMainMenuAsync()
-	{
-		// Create empty args array for demos that need it
-		var emptyArgs = Array.Empty<string>();
-		// Define menu choices array to avoid CA1861 warning
-		var menuChoices = new[]
-		{
-			"1. Interactive Spectre Console Formatter Demo",
-			"2. File Logger Demo",
-			"3. File Logger with Rolling & Retention Demo",
-			"4. Test Console Logger Demo",
-			"9. Exit"
-		};
+        // Configure commands
+        app.Configure(config =>
+        {
+            // Add individual demo commands
+            config.AddCommand<FileLoggerCommand>("file")
+                .WithDescription("Run the file logger demo");
 
-		while (true)
-		{
-			System.Console.Clear();
-			AnsiConsole.Write(
-				new FigletText("Open.Logging")
-					.Color(Color.Green)
-					.Centered());
+            config.AddCommand<RollingFileLoggerCommand>("rolling")
+                .WithDescription("Run the file logger with rolling & retention demo");
 
-			AnsiConsole.WriteLine();
-			var choice = AnsiConsole.Prompt(
-			  new SelectionPrompt<string>()
-				  .Title("Choose a demo to run:")
-				  .PageSize(10)
-				  .AddChoices(menuChoices));
+            config.AddCommand<FormatterCommand>("formatter")
+                .WithDescription("Run the interactive Spectre Console formatter demo");
 
-			switch (choice)
-			{
-				case "1. Interactive Spectre Console Formatter Demo":
-					await FormatterDemoProgram.RunAsync().ConfigureAwait(false);
-					PauseForUser();
-					break;
+            config.AddCommand<TestCommand>("test")
+                .WithDescription("Run the test console logger demo with theme demonstrations");
 
-				case "2. File Logger Demo":
-					FileLoggerDemoProgram.RunDemo();
-					PauseForUser();
-					break;
+            config.AddCommand<ConfigTestCommand>("config")
+                .WithDescription("Run the configuration test demo");
 
-				case "3. File Logger with Rolling & Retention Demo":
-					await FileLoggerRollingDemoProgram.RunAsync(emptyArgs).ConfigureAwait(false);
-					PauseForUser();
-					break;
+            config.AddCommand<MenuCommand>("menu")
+                .WithDescription("Show the interactive menu (default)");
 
-				case "4. Test Console Logger Demo":
-					// This will continue to the test demo below
-					return await TestDemoAsync().ConfigureAwait(false);
+#if DEBUG
+            config.PropagateExceptions();
+            config.ValidateExamples();
+#endif
+        });
 
-				case "9. Exit":
-					return 0;
-			}
-		}
-	}
-
-	/// <summary>
-	/// Pauses execution until user presses a key.
-	/// </summary>
-	private static void PauseForUser()
-	{
-		System.Console.WriteLine();
-		System.Console.WriteLine("Press any key to return to the menu...");
-		System.Console.ReadKey(true);
-	}
-
-	/// <summary>
-	/// This wraps the original test demo.
-	/// </summary>
-	private static async Task<int> TestDemoAsync()
-	{
-		// Create a service collection for DI
-		var services = new ServiceCollection();
-
-		// DO NOT REMOVE THIS SECTION: It verifies the DI Configuration
-		#region DI Configuration Test
-		// Add logging with our Spectre Console formatter
-		services.AddLogging(logging =>
-		{
-			// Clear default providers
-			logging.ClearProviders();
-
-			// Add Spectre console logger with options
-			logging.AddSpectreConsole(options =>
-			{
-				options.Labels = new()
-				{
-					Information = "INFO-",
-					Warning = "WARN!",
-					Error = "ERROR",
-					Critical = "CRIT!",
-				};
-				options.Theme = SpectreConsoleLogTheme.Default;
-			});
-
-			// Set minimum log level to Trace to see all log levels
-			logging.SetMinimumLevel(LogLevel.Trace);
-		});
-
-		// Add our demo service
-		services.AddTransient<LoggingDemoService>();
-
-		// Build the service provider
-		var serviceProvider = services.BuildServiceProvider();
-
-		try
-		{
-			// Get the demo service from DI and run it
-			var demoService = serviceProvider.GetRequiredService<LoggingDemoService>();
-
-			var rule = new Rule("[bold]Open.Logging.Extensions.SpectreConsole Demo[/]")
-			{
-				Style = Style.Parse("blue")
-			};
-			AnsiConsole.Write(rule);
-			AnsiConsole.WriteLine();
-			await demoService.RunAsync().ConfigureAwait(false);
-			AnsiConsole.WriteLine();
-			var endRule = new Rule("[bold]Demo Complete[/]")
-			{
-				Style = Style.Parse("blue")
-			};
-			AnsiConsole.Write(endRule);
-
-		}
-		catch (Exception ex)
-		{
-			AnsiConsole.WriteException(ex);
-			return 1;
-		}
-		#endregion
-
-		// -------------------- Theme Demonstrations --------------------
-
-		// Display a heading for the theme demos
-		AnsiConsole.WriteLine();
-		var themeDemoRule = new Rule("[bold yellow]Theme Demonstrations[/]")
-		{
-			Style = Style.Parse("yellow")
-		};
-		AnsiConsole.Write(themeDemoRule);
-		AnsiConsole.WriteLine();
-
-		// Get available themes
-		var themes = new[]
-		{
-			("ModernColors", SpectreConsoleLogTheme.ModernColors),
-			("TweakedDefaults", SpectreConsoleLogTheme.TweakedDefaults),
-			("LightBackground", SpectreConsoleLogTheme.LightBackground),
-			("Dracula", SpectreConsoleLogTheme.Dracula),
-			("Monokai", SpectreConsoleLogTheme.Monokai),
-			("SolarizedDark", SpectreConsoleLogTheme.SolarizedDark),
-			("OneDark", SpectreConsoleLogTheme.OneDark)
-		};
-
-		// Demonstrate each theme
-		foreach (var (themeName, theme) in themes)
-		{
-			// Display theme name
-			AnsiConsole.WriteLine();
-			var themeRule = new Rule($"[bold]Theme: {themeName}[/]")
-			{
-				Style = Style.Parse("cyan")
-			};
-			AnsiConsole.Write(themeRule);
-			AnsiConsole.WriteLine();
-
-			// Create a logger factory with the current theme
-			using var loggerFactory = LoggerFactory.Create(builder =>
-			{
-				builder.ClearProviders();
-				builder.AddSpectreConsole(options =>
-				{
-					options.Theme = theme;
-					// Keep the same custom labels for consistency
-					options.Labels = new()
-					{
-						Information = "INFO-",
-						Warning = "WARN!",
-						Error = "ERROR",
-						Critical = "CRIT!",
-					};
-				});
-				builder.SetMinimumLevel(LogLevel.Trace);
-			});
-
-			// Create logger and demo service
-			var themeLogger = loggerFactory.CreateLogger<LoggingDemoService>();
-			var themeDemo = new LoggingDemoService(themeLogger);
-
-			// Run the demo with this theme
-			await themeDemo.RunAsync().ConfigureAwait(false);
-		}
-
-		// Final message
-		AnsiConsole.WriteLine();
-		var finalRule = new Rule("[bold green]All Themes Demonstrated[/]")
-		{
-			Style = Style.Parse("green")
-		};
-
-		AnsiConsole.Write(finalRule);
-
-		// Always pause when demoing
-		PauseForUser();
-
-		return 0;
-	}   /// <summary>
-		/// Tests file logger configuration binding.
-		/// </summary>
-	private static Task<int> TestConfigurationAsync()
-	{
-		System.Console.WriteLine("Testing File Logger Configuration Binding...");
-		System.Console.WriteLine();
-
-		// Test different configuration section patterns
-		var testPatterns = new Dictionary<string, string>
-		{
-			["Logging:FileLogger"] = "FileLogger",
-			["Logging:FileLoggerProvider"] = "FileLoggerProvider",
-			["Logging:File"] = "File"
-		};
-
-		foreach (var pattern in testPatterns)
-		{
-			System.Console.WriteLine($"Testing configuration pattern: {pattern.Key}");
-			TestConfigurationPattern(pattern.Key, pattern.Value);
-			System.Console.WriteLine();
-		}
-
-		return Task.FromResult(0);
-	}
-
-	private static void TestConfigurationPattern(string configPrefix, string patternName)
-	{
-		// Create configuration
-		var path = Path.Combine(Path.GetTempPath(), $"ConfigTest_{patternName}");
-		var configValues = new Dictionary<string, string?>
-		{
-			[$"{configPrefix}:LogDirectory"] = path,
-			[$"{configPrefix}:FileNamePattern"] = $"config-test-{patternName}-{{Timestamp}}.log",
-			[$"{configPrefix}:MaxLogEntries"] = "10",
-		};
-
-		var configuration = new ConfigurationBuilder()
-			.AddInMemoryCollection(configValues)
-			.Build();
-
-		// Create services
-		var services = new ServiceCollection();
-		services.AddSingleton<IConfiguration>(configuration);
-
-		// Add logging with file logger and configuration
-		services.AddLogging(builder =>
-		{
-			builder.AddConfiguration(configuration.GetSection("Logging"));
-			builder.AddFileLogger();
-		});
-
-		var serviceProvider = services.BuildServiceProvider();
-
-		// Get and test the options
-		var options = serviceProvider.GetService<IOptions<FileLoggerOptions>>();
-		if (options == null)
-		{
-			System.Console.WriteLine($"❌ Failed: Could not get FileLoggerOptions from DI");
-			return;
-		}
-
-		var optionsValue = options.Value;
-
-		System.Console.WriteLine($"  Expected LogDirectory: {path}");
-		System.Console.WriteLine($"  Actual LogDirectory: {optionsValue.LogDirectory}");
-		System.Console.WriteLine($"  Match: {(optionsValue.LogDirectory == path ? "✅" : "❌")}");
-
-		if (optionsValue.LogDirectory == path)
-		{
-			System.Console.WriteLine($"  🎉 SUCCESS! Configuration pattern '{configPrefix}' works!");
-		}
-	}
+        // Run the command app
+        return await app.RunAsync(args).ConfigureAwait(false);
+    }
 }
