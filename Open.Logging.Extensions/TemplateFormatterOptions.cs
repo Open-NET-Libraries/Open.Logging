@@ -17,9 +17,6 @@ public partial record TemplateFormatterOptions
 	public static readonly FrozenDictionary<string, int> TokenMap
 		= GetTokenMap().ToFrozenDictionary();
 
-	private readonly static Regex TemplateTokenPattern
-		= new(@"\{(\w+)([,:][^}]+)?}", RegexOptions.Compiled | RegexOptions.NonBacktracking);
-
 	private const string DefaultTemplate
 		= "{Elapsed:hh:mm:ss.fff} {Category}{Scopes}{NewLine}[{Level}]: {Message}{NewLine}{Exception}";
 
@@ -62,28 +59,44 @@ public partial record TemplateFormatterOptions
 	{
 		ArgumentNullException.ThrowIfNull(value);
 
-		var formatString = TemplateTokenPattern.Replace(value, m =>
+		var formatString = TemplateTokenPattern().Replace(value, m =>
 		{
-			var token = m.Groups[1].Value;
-			var format = m.Groups[2].Value;
-			if (!TokenMap.TryGetValue(token, out var tokenValue))
+			var precedingText = m.Groups["preceding"].ValueSpan;
+			var token = m.Groups["token"].ValueSpan;
+			var format = m.Groups["format"].ValueSpan;
+
+			var alternativeLookup = TokenMap.GetAlternateLookup<ReadOnlySpan<char>>();
+			// If it doesn't match a known token, leave it unchanged
+			if (!alternativeLookup.TryGetValue(token, out var tokenValue))
 				return m.Value;
 
-			if (string.IsNullOrEmpty(format))
-			{
-				return $"{{{tokenValue}}}";
-			}
+			if (format.Length == 0)
+				return $"{precedingText}{{{tokenValue}}}"; // No format specified, just return the token.
 
-			// Replace every colon with @"\:" after the first one.
 			var delimiter = format[0];
 			Debug.Assert(delimiter is ':' or ',');
-			var formatSpan = format.AsSpan(1);
-			if (formatSpan.Length == 0) return $"{{{tokenValue}}}"; // No format specified, just return the token.
+			format = format.Slice(1);
+			if (format.Length == 0) return $"{precedingText}{{{tokenValue}}}"; // No format specified, just return the token.
 
 			var sb = new StringBuilder();
-			sb.Append('{').Append(tokenValue).Append(delimiter);
+			sb.Append(precedingText).Append('{').Append(tokenValue).Append(delimiter);
+
+			if (delimiter is ',')
+			{
+				var i = format.IndexOf(':');
+				if (i == -1)
+				{
+					sb.Append(format);
+					goto close;
+				}
+
+				delimiter = ':';
+				sb.Append(format.Slice(0, i)).Append(delimiter);
+				format = format.Slice(i + 1);
+			}
+
 			// Using the FormatExcapeCharacters regex, iterate through the segments in formatSpan and replace the unescaped characters.
-			var matches = FormatExcapeCharacters().EnumerateMatches(formatSpan);
+			var matches = FormatExcapeCharacters().EnumerateMatches(format);
 			if (matches.MoveNext())
 			{
 				var lastIndex = 0;
@@ -92,24 +105,25 @@ public partial record TemplateFormatterOptions
 					var match = matches.Current;
 					if (match.Index > lastIndex)
 					{
-						sb.Append(formatSpan.Slice(lastIndex, match.Index - lastIndex));
+						sb.Append(format.Slice(lastIndex, match.Index - lastIndex));
 					}
 
-					sb.Append('\\').Append(formatSpan.Slice(match.Index, match.Length));
+					sb.Append('\\').Append(format.Slice(match.Index, match.Length));
 					lastIndex = match.Index + match.Length;
 				}
 				while (matches.MoveNext());
 
-				if (lastIndex < formatSpan.Length)
+				if (lastIndex < format.Length)
 				{
-					sb.Append(formatSpan.Slice(lastIndex)); // Append the remaining part of the format string
+					sb.Append(format.Slice(lastIndex)); // Append the remaining part of the format string
 				}
 			}
 			else
 			{
-				sb.Append(formatSpan);
+				sb.Append(format);
 			}
 
+		close:
 			sb.Append('}');
 			return sb.ToString();
 		});
@@ -200,6 +214,9 @@ public partial record TemplateFormatterOptions
 
 		return sb.ToString();
 	}
+
+	[GeneratedRegex(@"(?<!\{)(?<preceding>(?:\{\{)*)\{(?<token>\w+)(?<format>[,:][^}]+)?}", RegexOptions.Compiled)]
+	private static partial Regex TemplateTokenPattern();
 
 	[GeneratedRegex(@"(?<!\\)[.:]", RegexOptions.Compiled)]
 	private static partial Regex FormatExcapeCharacters();
