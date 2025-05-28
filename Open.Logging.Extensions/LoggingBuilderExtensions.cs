@@ -61,4 +61,74 @@ public static class LoggingBuilderExtensions
 			builder, name,
 			handler is null ? null! : (e, _) => handler(e),
 			timestamp, synchronize);
+
+	/// <summary>
+	/// Adds a <see cref="ConsoleTemplateFormatter"/> to the logging builder with template-based formatting.
+	/// </summary>
+	/// <param name="builder">The <see cref="ILoggingBuilder"/> to add the formatter to.</param>
+	/// <param name="options">The template formatter options to configure the formatter.</param>
+	/// <param name="name">The name of the formatter. If not provided, uses a default name based on the template.</param>
+	/// <returns>The <see cref="ILoggingBuilder"/> so that additional calls can be chained.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="options"/> is null.</exception>
+	public static ILoggingBuilder AddConsoleTemplateFormatter(
+		this ILoggingBuilder builder,
+		TemplateFormatterOptions options,
+		string? name = null)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		ArgumentNullException.ThrowIfNull(options);
+
+		name ??= $"template-{Guid.NewGuid():N}";
+
+		builder.AddConsole(consoleOptions => consoleOptions.FormatterName = name);
+		builder.Services.AddSingleton<ConsoleFormatter>(_ =>
+			new ConsoleTemplateFormatter(options, name));
+
+		return builder;
+	}
+
+	/// <summary>
+	/// Adds a <see cref="ConsoleTemplateFormatter"/> to the logging builder with template-based formatting.
+	/// </summary>
+	/// <param name="builder">The <see cref="ILoggingBuilder"/> to add the formatter to.</param>
+	/// <param name="configure">A delegate to configure the template formatter options.</param>
+	/// <param name="name">The name of the formatter. If not provided, uses a default name based on the template.</param>
+	/// <returns>The <see cref="ILoggingBuilder"/> so that additional calls can be chained.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="configure"/> is null.</exception>
+	public static ILoggingBuilder AddConsoleTemplateFormatter(
+		this ILoggingBuilder builder,
+		Action<TemplateFormatterOptions> configure,
+		string? name = null)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		ArgumentNullException.ThrowIfNull(configure);
+
+		var options = new TemplateFormatterOptions();
+		configure(options);
+
+		return builder.AddConsoleTemplateFormatter(options, name);
+	}
+
+	/// <summary>
+	/// Adds a <see cref="ConsoleTemplateFormatter"/> to the logging builder with a simple template string.
+	/// </summary>
+	/// <param name="builder">The <see cref="ILoggingBuilder"/> to add the formatter to.</param>
+	/// <param name="template">The template string to use for formatting log entries.</param>
+	/// <param name="name">The name of the formatter. If not provided, uses a default name based on the template.</param>
+	/// <returns>The <see cref="ILoggingBuilder"/> so that additional calls can be chained.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> or <paramref name="template"/> is null.</exception>
+	/// <exception cref="ArgumentException">Thrown when <paramref name="template"/> is empty or whitespace.</exception>
+	public static ILoggingBuilder AddConsoleTemplateFormatter(
+		this ILoggingBuilder builder,
+		string template,
+		string? name = null)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		
+		if (string.IsNullOrWhiteSpace(template))
+			throw new ArgumentException("Template must not be null or whitespace.", nameof(template));
+
+		var options = new TemplateFormatterOptions { Template = template };
+		return builder.AddConsoleTemplateFormatter(options, name);
+	}
 }

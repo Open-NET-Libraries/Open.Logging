@@ -19,7 +19,7 @@ public interface IMemoryLoggerProvider : ILoggerProvider
 	/// Atomically swaps the internal list with a new one, returning the old list to the caller.
 	/// </summary>
 	/// <returns>The complete list of log entries captured up to this point.</returns>
-	IReadOnlyList<PreparedLogEntry> Drain();
+	IEnumerable<PreparedLogEntry> Drain();
 
 	/// <summary>
 	/// Clears all log entries from the memory logger.
@@ -41,7 +41,7 @@ public sealed class MemoryLoggerProvider(
 	, IMemoryLoggerProvider
 {
 	// Shared storage for all loggers created by this provider
-	private List<PreparedLogEntry> _logEntries = [];
+	private Queue<PreparedLogEntry> _logEntries = [];
 
 	// Lock object for thread safety
 	private readonly Lock _sync = new();
@@ -88,7 +88,7 @@ public sealed class MemoryLoggerProvider(
 	}
 
 	/// <inheritdoc/>
-	public IReadOnlyList<PreparedLogEntry> Drain()
+	public IEnumerable<PreparedLogEntry> Drain()
 	{
 		lock (_sync)
 		{
@@ -124,7 +124,7 @@ public sealed class MemoryLoggerProvider(
 	/// </summary>
 	private sealed class MemoryLogger(
 		string category,
-		List<PreparedLogEntry> logEntries,
+		Queue<PreparedLogEntry> logEntries,
 		Lock sync,
 		DateTimeOffset startTime,
 		LogLevel minLogLevel,
@@ -141,10 +141,10 @@ public sealed class MemoryLoggerProvider(
 				if (maxCapacity > 0 && logEntries.Count >= maxCapacity)
 				{
 					// Remove oldest entry to make room
-					logEntries.RemoveAt(0);
+					logEntries.Dequeue();
 				}
 
-				logEntries.Add(entry);
+				logEntries.Enqueue(entry);
 			}
 		}
 	}
