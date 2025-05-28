@@ -9,8 +9,7 @@ namespace Open.Logging.Extensions.Memory;
 /// Extension methods for adding and configuring <see cref="MemoryLoggerProvider"/> to the logging builder.
 /// </summary>
 public static class MemoryLoggerBuilderExtensions
-{
-	/// <summary>
+{   /// <summary>
 	/// Adds a memory logger provider to the logging builder.
 	/// </summary>
 	/// <param name="builder">The logging builder to add the memory logger provider to.</param>
@@ -18,16 +17,20 @@ public static class MemoryLoggerBuilderExtensions
 	/// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
 	public static ILoggingBuilder AddMemoryLogger(this ILoggingBuilder builder)
 	{
-		ArgumentNullException.ThrowIfNull(builder);
-
-		// Add configuration support
+		ArgumentNullException.ThrowIfNull(builder);     // Add configuration support
 		builder.AddConfiguration();
 
-		// Register the logger provider
-		builder.Services.TryAddEnumerable(
-			ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>());
+		// Register the concrete type first to ensure single instance
+		builder.Services.TryAddSingleton<MemoryLoggerProvider>();
 
-		builder.Services.TryAddSingleton<IMemoryLoggerProvider, MemoryLoggerProvider>();
+		// Register as ILoggerProvider using the singleton instance
+		builder.Services.TryAddEnumerable(
+			ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>(sp =>
+				sp.GetRequiredService<MemoryLoggerProvider>()));
+
+		// Register as IMemoryLoggerProvider using the same singleton instance
+		builder.Services.TryAddSingleton<IMemoryLoggerProvider>(sp =>
+			sp.GetRequiredService<MemoryLoggerProvider>());
 
 		// Register options for the provider - this handles configuration binding automatically
 		LoggerProviderOptions.RegisterProviderOptions<

@@ -31,10 +31,11 @@ internal static class Program
 				.WithDescription("Run the interactive Spectre Console formatter demo");
 
 			config.AddCommand<TestCommand>("test")
-				.WithDescription("Run the test console logger demo with theme demonstrations");
-
-			config.AddCommand<ConfigTestCommand>("config")
+				.WithDescription("Run the test console logger demo with theme demonstrations"); config.AddCommand<ConfigTestCommand>("config")
 				.WithDescription("Run the configuration test demo");
+
+			config.AddCommand<MultipleLoggersCommand>("multiple")
+				.WithDescription("Verify that multiple loggers work together correctly");
 
 			config.AddCommand<MenuCommand>("menu")
 				.WithDescription("Show the interactive menu (default)");

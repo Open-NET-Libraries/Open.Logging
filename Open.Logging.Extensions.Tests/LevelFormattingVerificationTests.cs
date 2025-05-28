@@ -7,7 +7,7 @@ namespace Open.Logging.Extensions.Tests;
 /// Tests to verify that LogLevelLabels customization works correctly for Level formatting.
 /// </summary>
 public sealed class LevelFormattingVerificationTests
-{	
+{
 	[Theory]
 	[InlineData(LogLevel.Information, "{Level}", "INFO")]
 	[InlineData(LogLevel.Warning, "{Level}", "WARN")]
@@ -55,12 +55,12 @@ public sealed class LevelFormattingVerificationTests
 		// Test Level with alignment 
 		options.Template = "{Level,10}";
 		Assert.Equal("{5,10}", options.TemplateFormatString);
-		
+
 		// Test Level with negative alignment (left-aligned)
 		options.Template = "{Level,-10}";
 		Assert.Equal("{5,-10}", options.TemplateFormatString);
 	}
-	
+
 	[Fact]
 	public void StringFormat_UAndLFormatSpecifiers_AssumptionTest()
 	{
@@ -118,10 +118,10 @@ public sealed class LevelFormattingVerificationTests
 		var lChangesString = !string.Equals(stringResultPlain, stringResultL, StringComparison.Ordinal);
 
 		Assert.True(true, $"Format specifiers change output - String: U={uChangesString}, L={lChangesString}");
-		
+
 		// For enums, :U and :L are not valid format specifiers and would throw FormatException
 		var testEnum = LogLevel.Information;
-		
+
 		// These should throw FormatException
 		Assert.Throws<FormatException>(() => string.Format(CultureInfo.InvariantCulture, "{0:U}", testEnum));
 		Assert.Throws<FormatException>(() => string.Format(CultureInfo.InvariantCulture, "{0:L}", testEnum));

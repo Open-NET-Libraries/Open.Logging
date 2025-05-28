@@ -124,7 +124,7 @@ public static class LoggingBuilderExtensions
 		string? name = null)
 	{
 		ArgumentNullException.ThrowIfNull(builder);
-		
+
 		if (string.IsNullOrWhiteSpace(template))
 			throw new ArgumentException("Template must not be null or whitespace.", nameof(template));
 

@@ -24,7 +24,7 @@ public partial record FileLoggerOptions : TemplateFormatterOptions
 	/// {Timestamp} - The current timestamp (can be formatted using standard date format strings: {Timestamp:yyyyMMdd})
 	/// {ProcessId} - The current process ID
 	/// </remarks>
-	public string FileNamePattern { get; set; } = "log_{Timestamp:yyyyMMdd}.log";
+	public string FileNamePattern { get; set; } = "{Timestamp:yyyyMMddHHmmss}.log";
 
 	/// <summary>
 	/// Gets or sets a value indicating whether to use UTC time for file naming patterns.

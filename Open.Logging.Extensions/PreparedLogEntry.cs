@@ -52,7 +52,7 @@ public readonly record struct PreparedLogEntry
 	/// The exception details for the log entry, if any
 	/// </summary>
 	public Exception? Exception { get; init; }
-	
+
 	/// <summary>
 	/// Gets the amount of time that has elapsed since the recorded <see cref="Timestamp"/> and the <see cref="StartTime"/>.
 	/// </summary>

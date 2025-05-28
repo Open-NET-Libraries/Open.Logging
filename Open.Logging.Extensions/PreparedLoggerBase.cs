@@ -44,7 +44,7 @@ public abstract class PreparedLoggerBase(
 #if DEBUG
 			throw;
 #else
-            // Swallow exceptions in release to avoid logging failures crashing the app.
+			// Swallow exceptions in release to avoid logging failures crashing the app.
 #endif
 		}
 	}

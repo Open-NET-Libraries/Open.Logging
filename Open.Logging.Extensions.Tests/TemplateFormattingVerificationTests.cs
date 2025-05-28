@@ -90,7 +90,7 @@ public sealed class TemplateFormattingVerificationTests
 		// Assert
 		// Verify that the result contains a reasonable elapsed time representation
 		Assert.NotEmpty(result);
-				// For standard formats, check if the format is being applied
+		// For standard formats, check if the format is being applied
 		if (expectedInternalFormat.Contains("ss", StringComparison.Ordinal))
 		{
 			// TimeSpan formatting behavior:
@@ -111,7 +111,8 @@ public sealed class TemplateFormattingVerificationTests
 				// ss.fff shows only the seconds component (3.456), not total seconds (123.456)
 				Assert.Contains("03.456", result, StringComparison.Ordinal);
 			}
-		}		else if (expectedInternalFormat is "c" or "g" or "G")
+		}
+		else if (expectedInternalFormat is "c" or "g" or "G")
 		{
 			// Should contain TimeSpan in standard format
 			Assert.True(result.Contains(':', StringComparison.Ordinal) || result.Contains("123", StringComparison.Ordinal), $"Result should contain time elements. Actual: {result}");
@@ -152,24 +153,24 @@ public sealed class TemplateFormattingVerificationTests
 
 		// Assert
 		Assert.NotEmpty(result);
-		
+
 		// Verify that the field width and alignment parameters are being used in the template
 		// Note: Actual alignment testing is complex due to implementation details
 		Assert.True(fieldWidth > 0, "Field width should be positive");
 		Assert.True(rightAligned || !rightAligned, "Right aligned parameter should be boolean");
-		
+
 		// For Level alignment test
 		if (template.Contains("Level", StringComparison.Ordinal))
 		{
 			Assert.Contains("ERROR", result, StringComparison.Ordinal);
 		}
-		
+
 		// For Category alignment test
 		if (template.Contains("Category", StringComparison.Ordinal))
 		{
 			Assert.Contains("Short", result, StringComparison.Ordinal);
 		}
-		
+
 		// For Message alignment test  
 		if (template.Contains("Message", StringComparison.Ordinal))
 		{
@@ -204,7 +205,7 @@ public sealed class TemplateFormattingVerificationTests
 		// Arrange - Use one of the documented template examples
 		var template = "{Timestamp:HH:mm:ss.fff} {Level,-11} {Category,30}: {Message}";
 		var testTime = new DateTimeOffset(2024, 1, 15, 14, 30, 25, 123, TimeSpan.Zero);
-		
+
 		var options = new TemplateFormatterOptions
 		{
 			Template = template,

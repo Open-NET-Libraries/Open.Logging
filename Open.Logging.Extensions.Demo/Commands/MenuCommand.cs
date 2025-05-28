@@ -36,14 +36,14 @@ internal sealed class MenuCommand : BaseCommand<MenuCommandSettings>
 	private static async Task<int> ShowMainMenuAsync()
 	{
 		// Create empty args array for demos that need it
-		var emptyArgs = Array.Empty<string>();
-		// Define menu choices array to avoid CA1861 warning
+		var emptyArgs = Array.Empty<string>();      // Define menu choices array to avoid CA1861 warning
 		var menuChoices = new[]
 		{
 			"1. Interactive Spectre Console Formatter Demo",
 			"2. File Logger Demo",
 			"3. File Logger with Rolling & Retention Demo",
 			"4. Test Console Logger Demo",
+			"5. Multiple Loggers Verification Demo",
 			"9. Exit"
 		};
 
@@ -78,10 +78,13 @@ internal sealed class MenuCommand : BaseCommand<MenuCommandSettings>
 					await FileLoggerRollingDemoProgram.RunAsync(emptyArgs).ConfigureAwait(false);
 					PauseForUser();
 					break;
-
 				case "4. Test Console Logger Demo":
 					// This will continue to the test demo below
 					return await RunTestDemoAsync().ConfigureAwait(false);
+				case "5. Multiple Loggers Verification Demo":
+					await Examples.MultipleLoggersVerificationDemo.RunVerificationAsync().ConfigureAwait(false);
+					PauseForUser();
+					break;
 
 				case "9. Exit":
 					return 0;
