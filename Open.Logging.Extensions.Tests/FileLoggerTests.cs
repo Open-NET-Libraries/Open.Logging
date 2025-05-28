@@ -308,7 +308,7 @@ public class FileLoggerTests : FileLoggerTestBase
 		// Verify that the log file was created and contains messages
 		var logFiles = Directory.GetFiles(context.Directory, "stream-recreation-test.log");
 		Assert.Single(logFiles);
-		
+
 		var logContent = await File.ReadAllTextAsync(logFiles[0]);
 		Assert.Contains("Message 0", logContent, StringComparison.Ordinal);
 		Assert.Contains("Message 19", logContent, StringComparison.Ordinal);
@@ -336,14 +336,14 @@ public class FileLoggerTests : FileLoggerTestBase
 		var testTask = Task.Run(async () =>
 		{
 			var provider = new FileLoggerProvider(options);
-			var logger = provider.CreateLogger("DisposeTestCategory");			// Start a continuous logging task
+			var logger = provider.CreateLogger("DisposeTestCategory");          // Start a continuous logging task
 			var loggingTask = Task.Run(async () =>
 			{
 				try
 				{
 					for (int i = 0; i < 1000; i++)
 					{
-						timeoutCts.Token.ThrowIfCancellationRequested(); 
+						timeoutCts.Token.ThrowIfCancellationRequested();
 						logger.LogInformation("Continuous logging message {Index} with data: {Data}",
 							i, new string('B', 100));
 						await Task.Delay(5, timeoutCts.Token).ConfigureAwait(false);

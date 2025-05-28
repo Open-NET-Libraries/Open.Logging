@@ -34,6 +34,7 @@ public interface IMemoryLoggerProvider : ILoggerProvider
 /// Creates a new memory logger provider with the specified options.
 /// </remarks>
 /// <param name="options">Configuration options for the memory logger.</param>
+[ProviderAlias("Memory")]
 public sealed class MemoryLoggerProvider(
 	MemoryLoggerOptions? options)
 	: DisposableBase

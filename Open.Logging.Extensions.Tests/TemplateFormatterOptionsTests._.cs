@@ -32,10 +32,10 @@ public sealed partial class TemplateFormatterOptionsTests
 			"Test message",             // {6} Message
 			"Exception details"         // {7} Exception
 		);
-	}	/// <summary>
-	/// Asserts that setting a template throws a FormatException.
-	/// </summary>
-	/// <param name="template">The invalid template to test.</param>
+	}   /// <summary>
+		/// Asserts that setting a template throws a FormatException.
+		/// </summary>
+		/// <param name="template">The invalid template to test.</param>
 	private static void AssertTemplateThrowsFormatException(string template)
 	{
 		var options = CreateOptions();
@@ -54,7 +54,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		var options = CreateOptions();
 		options.Template = template;
 		Assert.Equal(expectedFormatString, options.TemplateFormatString);
-		
+
 		// Ensure the format string is actually valid by testing it
 		_ = ValidateFormatString(options.TemplateFormatString);
 	}

@@ -72,13 +72,13 @@ public sealed partial class TemplateFormatterOptionsTests
 		// Assert
 		Assert.NotEmpty(options.TemplateFormatString);
 		Assert.NotEqual(options.Template, options.TemplateFormatString);
-		
+
 		// The default template should be transformed properly
 		Assert.Contains("{2:", options.TemplateFormatString, StringComparison.Ordinal); // Elapsed token
 		Assert.Contains("{3}", options.TemplateFormatString, StringComparison.Ordinal);  // Category token
 		Assert.Contains("{5}", options.TemplateFormatString, StringComparison.Ordinal);  // Level token
 		Assert.Contains("{6}", options.TemplateFormatString, StringComparison.Ordinal);  // Message token
-		
+
 		// Ensure the default format string is actually valid
 		_ = ValidateFormatString(options.TemplateFormatString);
 	}
@@ -97,7 +97,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		// Act & Assert - should not throw
 		var options = CreateOptions();
 		options.Template = validTemplate;
-		
+
 		// Ensure the format string is actually valid
 		_ = ValidateFormatString(options.TemplateFormatString);
 	}

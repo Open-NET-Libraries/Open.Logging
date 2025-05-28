@@ -12,7 +12,7 @@ public sealed partial class TemplateFormatterOptionsTests
 	{
 		// Arrange
 		var beforeCreation = DateTimeOffset.Now;
-		
+
 		// Act
 		var options = CreateOptions();
 		var afterCreation = DateTimeOffset.Now;
@@ -150,7 +150,7 @@ public sealed partial class TemplateFormatterOptionsTests
 		var fixedTime = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
 		var options1 = CreateOptions();
 		var options2 = CreateOptions();
-		
+
 		// Set the same StartTime to make them equal
 		options1.StartTime = fixedTime;
 		options2.StartTime = fixedTime;

@@ -37,12 +37,14 @@ public class MemoryLoggerBuilderExtensionsTests
 		var services = new ServiceCollection();
 
 		// Act
-		services.AddLogging(builder => builder.AddMemoryLogger(options =>
-		{
-			options.MaxCapacity = 500;
-			options.MinLogLevel = LogLevel.Warning;
-			options.IncludeScopes = false;
-		}));
+		services.AddLogging(
+			builder => builder.AddMemoryLogger(
+				options =>
+				{
+					options.MaxCapacity = 500;
+					options.MinLogLevel = LogLevel.Warning;
+					options.IncludeScopes = false;
+				}));
 
 		var serviceProvider = services.BuildServiceProvider();
 
@@ -86,5 +88,11 @@ public class MemoryLoggerBuilderExtensionsTests
 		// Assert
 		var provider = serviceProvider.GetService<IMemoryLoggerProvider>();
 		Assert.NotNull(provider);
+
+		var options = serviceProvider.GetService<IOptions<MemoryLoggerOptions>>();
+		Assert.NotNull(options);
+
+		var optionsValue = options.Value;
+		Assert.Equal(2000, optionsValue.MaxCapacity);
 	}
 }

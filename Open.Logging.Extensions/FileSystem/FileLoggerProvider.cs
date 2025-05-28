@@ -8,7 +8,7 @@ namespace Open.Logging.Extensions.FileSystem;
 /// <summary>
 /// A file logger provider that writes logs to files with support for rolling based on log entry count.
 /// </summary>
-[ProviderAlias("FileLogger")]
+[ProviderAlias("File")]
 public sealed class FileLoggerProvider : FileLoggerProviderBase
 {
 	StreamManager _streamManager;

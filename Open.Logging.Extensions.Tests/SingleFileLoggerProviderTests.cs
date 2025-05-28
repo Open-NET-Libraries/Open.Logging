@@ -8,7 +8,8 @@ namespace Open.Logging.Extensions.Tests;
 /// Tests for the SingleFileLoggerProvider class.
 /// </summary>
 public class SingleFileLoggerProviderTests : FileLoggerTestBase
-{	[Fact]
+{
+	[Fact]
 	public void SingleFileLoggerProvider_Constructor_WithOptions_CreatesInstance()
 	{
 		// Arrange
@@ -217,7 +218,7 @@ public class SingleFileLoggerProviderTests : FileLoggerTestBase
 		var testTask = Task.Run(async () =>
 		{
 			var provider = new SingleFileLoggerProvider(options);
-			var logger = provider.CreateLogger("DisposeTestCategory");			// Start a continuous logging task
+			var logger = provider.CreateLogger("DisposeTestCategory");          // Start a continuous logging task
 			var loggingTask = Task.Run(async () =>
 			{
 				try

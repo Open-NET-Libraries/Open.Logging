@@ -23,8 +23,16 @@ public static class MemoryLoggerBuilderExtensions
 		// Add configuration support
 		builder.AddConfiguration();
 
-		// Register the memory logger provider
+		// Register the logger provider
+		builder.Services.TryAddEnumerable(
+			ServiceDescriptor.Singleton<ILoggerProvider, MemoryLoggerProvider>());
+
 		builder.Services.TryAddSingleton<IMemoryLoggerProvider, MemoryLoggerProvider>();
+
+		// Register options for the provider - this handles configuration binding automatically
+		LoggerProviderOptions.RegisterProviderOptions<
+			MemoryLoggerOptions,
+			MemoryLoggerProvider>(builder.Services);
 
 		return builder;
 	}

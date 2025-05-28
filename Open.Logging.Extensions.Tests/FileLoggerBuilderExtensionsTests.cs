@@ -61,16 +61,18 @@ public class FileLoggerBuilderExtensionsTests
 		Assert.Equal(testPattern, optionsValue.FileNamePattern);
 		Assert.Equal(LogLevel.Warning, optionsValue.MinLogLevel);
 		Assert.Equal(100, optionsValue.MaxLogEntries);
-	}	[Fact]
+	}
+
+	[Fact]
 	public void AddFileLogger_WithConfiguration_ConfiguresOptions()
 	{
 		// Arrange
-		var path = Path.Combine(Path.GetTempPath(), "ConfigTestLogDir");	var configValues = new Dictionary<string, string?>
+		var path = Path.Combine(Path.GetTempPath(), "ConfigTestLogDir"); var configValues = new Dictionary<string, string?>
 		{
-			["Logging:FileLogger:LogDirectory"] = path,
-			["Logging:FileLogger:FileNamePattern"] = "config-test-{Timestamp}.log",
-			["Logging:FileLogger:MinLogLevel"] = "Warning",
-			["Logging:FileLogger:MaxLogEntries"] = "10",
+			["Logging:File:LogDirectory"] = path,
+			["Logging:File:FileNamePattern"] = "config-test-{Timestamp}.log",
+			["Logging:File:MinLogLevel"] = "Warning",
+			["Logging:File:MaxLogEntries"] = "10",
 		};
 
 		var configuration = new ConfigurationBuilder()
