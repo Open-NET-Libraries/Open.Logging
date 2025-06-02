@@ -87,7 +87,7 @@ internal sealed class SimpleFileLoggerDemo
 		var options = new FileLoggerOptions();
 		AnsiConsole.MarkupLine($"Log directory: [green]{options.LogDirectory}[/]");
 		AnsiConsole.MarkupLine($"File pattern: [green]{options.FileNamePattern}[/]");
-		AnsiConsole.MarkupLine("Template: [green]{0}[/]", options.Template);
+		AnsiConsole.WriteLine($"Template: {options.Template}");
 		AnsiConsole.MarkupLine($"Actual log file: [green]{actualLogFilePath}[/]");
 
 		// Check if the file exists and show its content
