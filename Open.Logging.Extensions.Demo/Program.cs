@@ -21,6 +21,9 @@ internal static class Program
 		app.Configure(config =>
 		{
 			// Add individual demo commands
+			config.AddCommand<SimpleFileLoggerCommand>("simple")
+				.WithDescription("Run the file logger demo with default settings");
+
 			config.AddCommand<FileLoggerCommand>("file")
 				.WithDescription("Run the file logger demo");
 
@@ -31,7 +34,9 @@ internal static class Program
 				.WithDescription("Run the interactive Spectre Console formatter demo");
 
 			config.AddCommand<TestCommand>("test")
-				.WithDescription("Run the test console logger demo with theme demonstrations"); config.AddCommand<ConfigTestCommand>("config")
+				.WithDescription("Run the test console logger demo with theme demonstrations");
+
+			config.AddCommand<ConfigTestCommand>("config")
 				.WithDescription("Run the configuration test demo");
 
 			config.AddCommand<MultipleLoggersCommand>("multiple")

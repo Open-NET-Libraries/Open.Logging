@@ -39,11 +39,12 @@ internal sealed class MenuCommand : BaseCommand<MenuCommandSettings>
 		var emptyArgs = Array.Empty<string>();      // Define menu choices array to avoid CA1861 warning
 		var menuChoices = new[]
 		{
-			"1. Interactive Spectre Console Formatter Demo",
-			"2. File Logger Demo",
-			"3. File Logger with Rolling & Retention Demo",
-			"4. Test Console Logger Demo",
-			"5. Multiple Loggers Verification Demo",
+			"1. Simple File Logger Demo (Default Settings)",
+			"2. Interactive Spectre Console Formatter Demo",
+			"3. File Logger Demo (Custom Settings)",
+			"4. File Logger with Rolling & Retention Demo",
+			"5. Test Console Logger Demo",
+			"6. Multiple Loggers Verification Demo",
 			"9. Exit"
 		};
 
@@ -64,24 +65,31 @@ internal sealed class MenuCommand : BaseCommand<MenuCommandSettings>
 
 			switch (choice)
 			{
-				case "1. Interactive Spectre Console Formatter Demo":
+				case "1. Simple File Logger Demo (Default Settings)":
+					SimpleFileLoggerDemo.RunDemo();
+					PauseForUser();
+					break;
+
+				case "2. Interactive Spectre Console Formatter Demo":
 					await FormatterDemoProgram.RunAsync().ConfigureAwait(false);
 					PauseForUser();
 					break;
 
-				case "2. File Logger Demo":
+				case "3. File Logger Demo (Custom Settings)":
 					FileLoggerDemoProgram.RunDemo();
 					PauseForUser();
 					break;
 
-				case "3. File Logger with Rolling & Retention Demo":
+				case "4. File Logger with Rolling & Retention Demo":
 					await FileLoggerRollingDemoProgram.RunAsync(emptyArgs).ConfigureAwait(false);
 					PauseForUser();
 					break;
-				case "4. Test Console Logger Demo":
+
+				case "5. Test Console Logger Demo":
 					// This will continue to the test demo below
 					return await RunTestDemoAsync().ConfigureAwait(false);
-				case "5. Multiple Loggers Verification Demo":
+
+				case "6. Multiple Loggers Verification Demo":
 					await Examples.MultipleLoggersVerificationDemo.RunVerificationAsync().ConfigureAwait(false);
 					PauseForUser();
 					break;
