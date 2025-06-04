@@ -13,7 +13,8 @@ namespace Open.Logging.Extensions.SpectreConsole;
 /// Initializes a new instance of the <see cref="ExceptionDisplay"/> class.
 /// </remarks>
 /// <param name="exception">The exception to display.</param>
-internal sealed partial class ExceptionDisplay(Exception exception) : IRenderable
+/// <param name="category">An optional category to filter the exception details.</param>
+internal sealed partial class ExceptionDisplay(Exception exception, string? category = null) : IRenderable
 {
 	private readonly Exception _exception = exception ?? throw new ArgumentNullException(nameof(exception));
 
@@ -85,7 +86,17 @@ internal sealed partial class ExceptionDisplay(Exception exception) : IRenderabl
 
 					if (match.Success && match.Groups.Count >= 3)
 					{
-						EscapeMarkup(builder, match.Groups[1].ValueSpan);
+						var m = match.Groups[1].ValueSpan;
+						// If m starts with the category, skip past that portion.
+						if (!string.IsNullOrWhiteSpace(category)
+							&& m.Length > category.Length
+							&& m.StartsWith(category, StringComparison.OrdinalIgnoreCase)
+							&& m[category.Length] == '.')
+						{
+							m = m.Slice(category.Length + 1); // Skip past the category and the dot
+						}
+
+						EscapeMarkup(builder, m);
 						builder.AppendLine();
 
 						// Second line with file/line info - convert to file:/// format if it contains spaces

@@ -39,13 +39,13 @@ public abstract class SpectreConsoleFormatterBase(
 	/// </summary>
 	protected bool NewLine { get; } = newLine;
 
-	private static readonly Rule DefaultHR
-		= new() { Style = Color.Grey };
+	private static readonly IRenderable DefaultSeparator
+		= new Text(Environment.NewLine);
 
 	/// <summary>
 	/// A basic horizontal rule.
 	/// </summary>
-	protected virtual Rule HR => DefaultHR;
+	protected virtual IRenderable EntrySeparator => DefaultSeparator;
 
 	/// <summary>
 	/// Creates a new console formatter with the specified name and timestamp.
@@ -177,13 +177,13 @@ public abstract class SpectreConsoleFormatterBase(
 	/// <summary>
 	/// Writes the exception details to the console.
 	/// </summary>
-	protected virtual bool WriteException(Exception? exception)
+	protected virtual bool WriteException(Exception? exception, string? category)
 	{
 		if (exception is null) return false;
 
 		try
 		{
-			Writer.Write(new ExceptionDisplay(exception));
+			Writer.Write(new ExceptionDisplay(exception, category));
 			Writer.WriteLine();
 		}
 		catch
@@ -201,21 +201,21 @@ public abstract class SpectreConsoleFormatterBase(
 	/// <summary>
 	/// Writes the exception details to the console with optional horizontal rules before and after.
 	/// </summary>
-	protected bool WriteException(Exception? exception, Placement hrs)
+	protected bool WriteException(Exception? exception, string? category, Placement hrs)
 	{
 		if (exception is null) return false;
 
 		if (hrs.HasFlag(Placement.Before))
-			Write(HR);
+			Write(EntrySeparator);
 
 		try
 		{
-			return WriteException(exception);
+			return WriteException(exception, category);
 		}
 		finally
 		{
 			if (hrs.HasFlag(Placement.After))
-				Write(HR);
+				Write(EntrySeparator);
 		}
 	}
 }

@@ -85,7 +85,7 @@ public sealed class CompactSpectreConsoleFormatter(
 		Writer.WriteLine();
 
 		// Exception handling
-		WriteException(entry.Exception, hrs: Placement.Both);
+		WriteException(entry.Exception, entry.Category, hrs: Placement.Both);
 
 		if (NewLine)
 			Writer.WriteLine();

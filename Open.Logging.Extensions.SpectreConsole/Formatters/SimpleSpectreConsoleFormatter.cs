@@ -67,7 +67,7 @@ public class SimpleSpectreConsoleFormatter(
 		WriteMessage(entry.Message, whiteSpace: Placement.Before);
 
 		Writer.WriteLine();
-		WriteException(entry.Exception, hrs: Placement.Both);
+		WriteException(entry.Exception, entry.Category, hrs: Placement.Both);
 
 		if (NewLine) Writer.WriteLine();
 	}

@@ -34,11 +34,9 @@ internal sealed class SimpleFileLoggerDemo
 				var services = new ServiceCollection();
 
 				// Add logging with file logger using defaults
-				services.AddLogging(builder =>
-				{
+				services.AddLogging(
 					// Just add the file logger with no configuration - all defaults
-					builder.AddFileLogger();
-				});
+					builder => builder.AddFileLogger());
 
 				ctx.Status("Creating service provider...");
 

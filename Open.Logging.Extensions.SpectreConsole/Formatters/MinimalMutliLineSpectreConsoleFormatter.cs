@@ -24,10 +24,10 @@ public sealed class MinimalMutliLineSpectreConsoleFormatter(
 		=> new(theme, labels, newLine, writer);
 
 	/// <inheritdoc />
-	protected override void WriteElapsed(TimeSpan elapsed, string format = "0.000s")
+	protected override void WriteElapsed(TimeSpan elapsed, string format = "000.000s")
 	{
 		var elapsedSeconds = elapsed.TotalSeconds;
-		var text = $" ({elapsedSeconds.ToString(format, CultureInfo.InvariantCulture)})";
+		var text = elapsedSeconds.ToString(format, CultureInfo.InvariantCulture);
 		Write(text, Theme.Timestamp);
 	}
 
@@ -55,10 +55,10 @@ public sealed class MinimalMutliLineSpectreConsoleFormatter(
 	/// <inheritdoc />
 	public override void Write(PreparedLogEntry entry)
 	{
-		if (!NewLine) Write(HR);
+		if (!NewLine) Write(EntrySeparator);
 
 		// First line: timestamp, elapsed, category and scopes
-		WriteTimestamp(entry.Timestamp);
+		//WriteTimestamp(entry.Timestamp);
 		WriteElapsed(entry.Elapsed);
 		WriteCategory(entry.Category, Placement.Before);
 		WriteScopes(entry.Scopes);
@@ -70,7 +70,7 @@ public sealed class MinimalMutliLineSpectreConsoleFormatter(
 		WriteLine();
 
 		// Exception if present
-		WriteException(entry.Exception);
+		WriteException(entry.Exception, entry.Category);
 
 		if (NewLine) WriteLine();
 	}

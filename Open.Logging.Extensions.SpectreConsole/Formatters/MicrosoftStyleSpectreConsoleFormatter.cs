@@ -74,13 +74,13 @@ public sealed class MicrosoftStyleSpectreConsoleFormatter(
 	}
 
 	/// <inheritdoc />
-	protected override bool WriteException(Exception? exception)
+	protected override bool WriteException(Exception? exception, string? category = null)
 	{
 		if (exception is null)
 			return false;
 
 		// Exception details in a highlighted box
-		var panel = new Panel(new ExceptionDisplay(exception))
+		var panel = new Panel(new ExceptionDisplay(exception, category))
 		{
 			Border = BoxBorder.Rounded,
 			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error)
@@ -108,7 +108,7 @@ public sealed class MicrosoftStyleSpectreConsoleFormatter(
 		WriteLine();
 
 		// Exception if present
-		WriteException(entry.Exception);
+		WriteException(entry.Exception, entry.Category);
 
 		if (NewLine) WriteLine();
 	}

@@ -141,7 +141,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 		Assert.Contains(memoryEntries, e => e.Message.Contains("Debug message", StringComparison.OrdinalIgnoreCase));
 		Assert.Contains(memoryEntries, e => e.Message.Contains("Info message", StringComparison.OrdinalIgnoreCase));
 		Assert.Contains(memoryEntries, e => e.Message.Contains("Warning message", StringComparison.OrdinalIgnoreCase));
-		Assert.Contains(memoryEntries, e => e.Message.Contains("Error message", StringComparison.OrdinalIgnoreCase));		// Assert - File should only have Warning and Error
+		Assert.Contains(memoryEntries, e => e.Message.Contains("Error message", StringComparison.OrdinalIgnoreCase));       // Assert - File should only have Warning and Error
 		var logFiles = Directory.GetFiles(testContext.Directory, "*.log");
 		if (logFiles.Length > 0)
 		{
@@ -152,6 +152,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 				var content = await File.ReadAllTextAsync(file);
 				allLogContent += content;
 			}
+
 			var logContent = allLogContent;
 
 			// Should NOT contain Debug or Info
@@ -184,9 +185,9 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 
 		var services = new ServiceCollection();
 		services.AddSingleton<IConfiguration>(configuration);
-		
+
 		IMemoryLoggerProvider memoryLoggerProvider;
-		
+
 		// Use proper scoping to ensure disposal
 		{
 			services.AddLogging(builder =>
@@ -218,7 +219,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 			// Properly dispose the service provider to flush all file buffers
 			await serviceProvider.DisposeAsync();
 		}
-		
+
 		// Now check the file after proper disposal ensures all buffers are flushed
 		var logFiles = Directory.GetFiles(testContext.Directory, "*.log");
 		Assert.NotEmpty(logFiles);
@@ -266,12 +267,14 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 
 		// Both should be different instances
 		Assert.NotSame(fileLoggerProvider, memoryLoggerProvider);
-	}	[Fact(Skip = "Stress test to expose race conditions - disable for regular runs")]
+	}
+
+	[Fact(Skip = "Stress test to expose race conditions - disable for regular runs")]
 	public async Task FileAndMemoryLoggers_StressTest_ExposeBufferingRaceCondition()
 	{
 		// This test runs multiple iterations to expose the intermittent failure
 		// related to FileLogger's async buffering vs Memory Logger's synchronous behavior
-		
+
 		const int iterations = 200; // Aggressive iteration count to expose race conditions
 		var failures = new List<(int iteration, string reason)>();
 
@@ -289,7 +292,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 						["Logging:File:LogDirectory"] = testContext.Directory,
 						["Logging:File:FileNamePattern"] = $"StressTest-Iter{iteration}-{{Timestamp:yyyy-MM-dd-HH-mm-ss-fff}}.log",
 						["Logging:File:Template"] = "[{Timestamp:HH:mm:ss}] FILE {Level}: {Message}",
-						["Logging:Memory:LogLevel:Default"] = "Information", 
+						["Logging:Memory:LogLevel:Default"] = "Information",
 						["Logging:Memory:MaxCapacity"] = "1000"
 					})
 					.Build();
@@ -307,7 +310,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 
 				using var serviceProvider = services.BuildServiceProvider();
 				var logger = serviceProvider.GetRequiredService<ILogger<MultipleLoggersIntegrationTests>>();
-				var memoryLoggerProvider = serviceProvider.GetRequiredService<IMemoryLoggerProvider>();				// Act - Log a unique message for this iteration
+				var memoryLoggerProvider = serviceProvider.GetRequiredService<IMemoryLoggerProvider>();             // Act - Log a unique message for this iteration
 				var iterationGuid = Guid.NewGuid().ToString("N");
 				var uniqueMessage = $"Test message iteration {iteration} - {iterationGuid}";
 				logger.LogInformation("Test message iteration {Iteration} - {Guid}", iteration, iterationGuid);
@@ -316,15 +319,17 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 				var memoryEntries = memoryLoggerProvider.Snapshot().ToList();
 				var memoryEntry = memoryEntries.FirstOrDefault(e => e.Message.Contains(uniqueMessage, StringComparison.OrdinalIgnoreCase));
 
-				if (memoryEntry.Equals(default(PreparedLogEntry)))
+				if (memoryEntry.Equals(default))
 				{
 					failures.Add((iteration, $"Memory logger missing message: {uniqueMessage}"));
 					continue;
-				}				// Wait minimal time and check file - this is where race condition occurs
+				}
+
+				// Wait minimal time and check file - this is where race condition occurs
 				await Task.Delay(0); // No delay at all to maximize race condition exposure
-				
+
 				var logFiles = Directory.GetFiles(testContext.Directory, "*.log");
-				
+
 				if (logFiles.Length == 0)
 				{
 					failures.Add((iteration, "No log files created"));
@@ -332,7 +337,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 				}
 
 				var logContent = await File.ReadAllTextAsync(logFiles[0]);
-				
+
 				// Check if file has the content - this might fail due to buffering
 				if (!logContent.Contains(uniqueMessage, StringComparison.OrdinalIgnoreCase))
 				{
@@ -367,7 +372,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 	{
 		// This test shows the correct way to handle FileLogger's async buffering
 		// by ensuring proper disposal before checking file contents
-		
+
 		using var testContext = CreateTestContext(nameof(FileAndMemoryLoggers_WithProperDisposal_ShouldBeReliable));
 		var configuration = new ConfigurationBuilder()
 			.AddInMemoryCollection(new Dictionary<string, string?>
@@ -384,7 +389,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 
 		var services = new ServiceCollection();
 		services.AddSingleton<IConfiguration>(configuration);
-				IMemoryLoggerProvider memoryLoggerProvider;
+		IMemoryLoggerProvider memoryLoggerProvider;
 		var testGuid = Guid.NewGuid().ToString("N");
 		var uniqueMessage = $"Test message with proper disposal - {testGuid}";
 
@@ -409,19 +414,19 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 			// Memory should have it immediately (synchronous behavior)
 			var memoryEntries = memoryLoggerProvider.Snapshot().ToList();
 			var memoryEntry = memoryEntries.FirstOrDefault(e => e.Message.Contains(uniqueMessage, StringComparison.OrdinalIgnoreCase));
-			Assert.False(memoryEntry.Equals(default(PreparedLogEntry)));
+			Assert.False(memoryEntry.Equals(default));
 			Assert.Contains(uniqueMessage, memoryEntry.Message, StringComparison.OrdinalIgnoreCase);
 
 			// Properly dispose the service provider to flush all buffers
 			await serviceProvider.DisposeAsync();
 		}
-		
+
 		// Now check the file after proper disposal
 		var logFiles = Directory.GetFiles(testContext.Directory, "*.log");
 		Assert.NotEmpty(logFiles);
 
 		var logContent = await File.ReadAllTextAsync(logFiles[0]);
-		
+
 		// With proper disposal, file should reliably contain the message
 		Assert.Contains(uniqueMessage, logContent, StringComparison.OrdinalIgnoreCase);
 		Assert.Contains("FILE INFO:", logContent, StringComparison.Ordinal);
@@ -439,7 +444,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 	{
 		// This test repeats the exact scenario from the original failing test
 		// to expose the intermittent failure more reliably
-		
+
 		const int iterations = 100;
 		var failures = new List<(int iteration, string reason)>();
 
@@ -487,7 +492,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 				var memoryEntries = memoryLoggerProvider.Snapshot().ToList();
 				var memoryEntry = memoryEntries.FirstOrDefault(e => e.Message.Contains("Test message", StringComparison.OrdinalIgnoreCase));
 
-				if (memoryEntry.Equals(default(PreparedLogEntry)))
+				if (memoryEntry.Equals(default))
 				{
 					failures.Add((iteration, "Memory logger missing message"));
 					continue;
@@ -528,7 +533,7 @@ public sealed class MultipleLoggersIntegrationTests : FileLoggerTestBase
 			{
 				failureReport += $"\n  ... and {failures.Count - 10} more failures";
 			}
-			
+
 			var failureRate = (double)failures.Count / iterations * 100;
 			Assert.Fail($"Intermittent failure detected! {failures.Count}/{iterations} iterations failed ({failureRate:F1}%):\n{failureReport}");
 		}

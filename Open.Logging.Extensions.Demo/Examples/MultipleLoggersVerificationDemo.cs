@@ -47,10 +47,7 @@ internal static class MultipleLoggersVerificationDemo
 				});
 
 				// Add Memory Logger
-				builder.AddMemoryLogger(options =>
-				{
-					options.MaxCapacity = 1000;
-				});
+				builder.AddMemoryLogger(options => options.MaxCapacity = 1000);
 
 				builder.SetMinimumLevel(LogLevel.Trace);
 			});

@@ -35,97 +35,150 @@ public static class LoggingExtensions
 		if (exception == null) return string.Empty;
 
 		var exceptionString = exception.ToString();
-		var lines = exceptionString.Split([Environment.NewLine], StringSplitOptions.None);
 		var result = new StringBuilder();
-
-		for (int i = 0; i < lines.Length; i++)
+		
+		ReadOnlySpan<char> exceptionSpan = exceptionString;
+		ReadOnlySpan<char> newLine = Environment.NewLine;
+		
+		// Process each line without creating string arrays
+		while (!exceptionSpan.IsEmpty)
 		{
-			var line = lines[i];
-
-			// Check if this line contains " in " (indicating a file path in stack trace)
-			if (line.Contains(" in ", StringComparison.Ordinal) && line.TrimStart().StartsWith("at ", StringComparison.Ordinal))
+			// Find the next newline
+			int lineEnd = exceptionSpan.IndexOf(newLine);
+			
+			// Get the current line
+			ReadOnlySpan<char> line = lineEnd >= 0 
+				? exceptionSpan.Slice(0, lineEnd) 
+				: exceptionSpan;
+				
+			// Process the line
+			ProcessLine(line, result, category);
+			
+			// Move to next line if there is one
+			if (lineEnd >= 0)
 			{
-				// Find the " in " part and split there
-				var inIndex = line.LastIndexOf(" in ", StringComparison.Ordinal);
-				if (inIndex > 0)
+				// Append a newline if we're not at the end
+				result.AppendLine();
+				exceptionSpan = exceptionSpan.Slice(lineEnd + newLine.Length);
+			}
+			else
+			{
+				// We're done
+				break;
+			}
+		}
+		
+		return result.ToString();
+	}
+	
+	private static void ProcessLine(ReadOnlySpan<char> line, StringBuilder result, string? category)
+	{
+		ReadOnlySpan<char> inMarker = " in ";
+		ReadOnlySpan<char> atPrefix = "at ";
+		
+		// Check if this line contains " in " (indicating a file path in stack trace)
+		if (line.Contains(inMarker, StringComparison.Ordinal) && 
+			line.TrimStart().StartsWith(atPrefix, StringComparison.Ordinal))
+		{
+			// Find the " in " part and split there
+			int inIndex = line.LastIndexOf(inMarker, StringComparison.Ordinal);
+			if (inIndex > 0)
+			{
+				ReadOnlySpan<char> beforeIn = line.Slice(0, inIndex);
+				ReadOnlySpan<char> afterIn = line.Slice(inIndex);
+				
+				// Handle category simplification if needed
+				if (!string.IsNullOrEmpty(category))
 				{
-					var beforeIn = line.Substring(0, inIndex);
-					var afterIn = line.Substring(inIndex);
-
-					// Optimize: if category matches the beginning of the stack trace, simplify it
-					if (!string.IsNullOrEmpty(category) && beforeIn.Contains(category, StringComparison.Ordinal))
+					string beforeInStr = beforeIn.ToString(); // Convert only when needed
+					if (beforeInStr.Contains(category, StringComparison.Ordinal))
 					{
 						// Extract just the class name from the category (last segment)
 						var lastDotIndex = category.LastIndexOf('.');
 						var className = lastDotIndex >= 0 ? category.Substring(lastDotIndex + 1) : category;
-
+						
 						// Replace the full namespace with just the class name
-						beforeIn = beforeIn.Replace(category, className, StringComparison.Ordinal);
+						beforeInStr = beforeInStr.Replace(category, className, StringComparison.Ordinal);
+						result.AppendLine(beforeInStr);
 					}
-					// Add the "at ..." part first
-					result.AppendLine(beforeIn);
-					// Add the "in ..." part with additional indentation and ensure quotes around file path
-					var formattedAfterIn = EnsureFilePathQuoted(afterIn);
-					result.Append("     ").Append(formattedAfterIn);
+					else
+					{
+						result.AppendLine(beforeInStr);
+					}
 				}
 				else
 				{
-					result.Append(line);
+					result.Append(beforeIn).AppendLine();
 				}
+				
+				// Add the "in ..." part with additional indentation and ensure quotes around file path
+				result.Append("     ");
+				EnsureFilePathQuoted(afterIn, result);
 			}
 			else
 			{
 				result.Append(line);
 			}
-
-			// Add newline for all but the last line
-			if (i < lines.Length - 1)
-			{
-				result.AppendLine();
-			}
 		}
-
-		return result.ToString();
+		else
+		{
+			result.Append(line);
+		}
 	}
 
 	/// <summary>
 	/// Ensures that a file path in a stack trace "in" portion is properly quoted.
+	/// Appends the result directly to the provided StringBuilder.
 	/// </summary>
-	/// <param name="inPortion">The "in" portion of a stack trace line (e.g., " in D:\path\file.cs:line 123")</param>
-	/// <returns>The properly quoted "in" portion</returns>
-	private static string EnsureFilePathQuoted(string inPortion)
+	private static void EnsureFilePathQuoted(ReadOnlySpan<char> inPortion, StringBuilder result)
 	{
-		if (string.IsNullOrEmpty(inPortion))
-			return inPortion;
+		if (inPortion.IsEmpty)
+			return;
 
 		// Look for pattern: " in [optional quote]path[optional quote]:line number"
-		const string inPrefix = " in ";
+		ReadOnlySpan<char> inPrefix = " in ";
 
 		if (!inPortion.StartsWith(inPrefix, StringComparison.Ordinal))
-			return inPortion;
+		{
+			result.Append(inPortion);
+			return;
+		}
 
-		var pathPart = inPortion.Substring(inPrefix.Length);
+		// Append the " in " prefix
+		result.Append(inPrefix);
+		
+		ReadOnlySpan<char> pathPart = inPortion.Slice(inPrefix.Length);
 
 		// If already properly quoted (starts and ends with quotes around path+line), return as-is
-		if (pathPart.StartsWith('"') && pathPart.EndsWith('"'))
-			return inPortion;
+		if (pathPart.Length >= 2 && pathPart[0] == '"' && pathPart[^1] == '"')
+		{
+			result.Append(pathPart);
+			return;
+		}
 
 		// Find the last colon that's followed by "line " (case insensitive)
-		var lineIndex = pathPart.LastIndexOf(":line ", StringComparison.OrdinalIgnoreCase);
+		// Need to work around case insensitivity by using string methods
+		string pathPartStr = pathPart.ToString();
+		int lineIndex = pathPartStr.LastIndexOf(":line ", StringComparison.OrdinalIgnoreCase);
+		
 		if (lineIndex < 0)
 		{
 			// No ":line" found, quote the entire path part
-			return $"{inPrefix}\"{pathPart}\"";
+			result.Append('"').Append(pathPart).Append('"');
+			return;
 		}
 
 		// Split into path and line number parts
-		var filePath = pathPart.Substring(0, lineIndex);
-		var lineNumberPart = pathPart.Substring(lineIndex);
+		ReadOnlySpan<char> filePath = pathPart.Slice(0, lineIndex);
+		ReadOnlySpan<char> lineNumberPart = pathPart.Slice(lineIndex);
 
 		// Remove any existing quotes from the file path
-		filePath = filePath.Trim('"');
+		if (filePath.Length >= 2 && filePath[0] == '"' && filePath[^1] == '"')
+		{
+			filePath = filePath.Slice(1, filePath.Length - 2);
+		}
 
 		// Return with properly quoted path + line number
-		return $"{inPrefix}\"{filePath}{lineNumberPart}\"";
+		result.Append('"').Append(filePath).Append(lineNumberPart).Append('"');
 	}
 }

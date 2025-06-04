@@ -96,12 +96,12 @@ public sealed class CallStackSpectreConsoleFormatter(
 	}
 
 	/// <inheritdoc />
-	protected override bool WriteException(Exception? exception)
+	protected override bool WriteException(Exception? exception, string? category)
 	{
 		if (exception is null)
 			return false;
 
-		var panel = new Panel(new ExceptionDisplay(exception))
+		var panel = new Panel(new ExceptionDisplay(exception, category))
 		{
 			Border = BoxBorder.Rounded,
 			BorderStyle = Theme.GetStyleForLevel(LogLevel.Error),
@@ -151,7 +151,7 @@ public sealed class CallStackSpectreConsoleFormatter(
 		WriteLine("────────");
 
 		// Exception handling
-		WriteException(entry.Exception);
+		WriteException(entry.Exception, entry.Category);
 
 		// Add space after the entry
 		if (NewLine) WriteLine();

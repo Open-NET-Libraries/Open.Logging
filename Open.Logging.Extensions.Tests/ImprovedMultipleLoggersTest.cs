@@ -67,7 +67,7 @@ public class ImprovedMultipleLoggersTest : FileLoggerTestBase
 		// Now read all file content
 		var logFiles = Directory.GetFiles(testContext.Directory, "*.log");
 		System.Console.WriteLine($"Found {logFiles.Length} log files after disposal");
-		
+
 		if (logFiles.Length > 0)
 		{
 			var allContent = new List<string>();
@@ -77,6 +77,7 @@ public class ImprovedMultipleLoggersTest : FileLoggerTestBase
 				allContent.Add(content);
 				System.Console.WriteLine($"File: {Path.GetFileName(file)}, Content: '{content.Trim()}'");
 			}
+
 			combinedFileContent = string.Join("\n", allContent);
 		}
 

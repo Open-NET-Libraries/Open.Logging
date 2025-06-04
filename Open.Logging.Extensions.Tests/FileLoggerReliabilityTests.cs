@@ -16,7 +16,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 	{
 		// This test demonstrates the race condition issue
 		using var testContext = CreateTestContext(nameof(FileLogger_AsyncBuffering_CanCauseRaceConditions));
-		
+
 		var configuration = new ConfigurationBuilder()
 			.AddInMemoryCollection(new Dictionary<string, string?>
 			{
@@ -57,6 +57,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 			{
 				combinedContent += await File.ReadAllTextAsync(file);
 			}
+
 			results.Add((delay, files.Length, combinedContent));
 		}
 
@@ -64,9 +65,9 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 		System.Console.WriteLine("Race condition test results:");
 		foreach (var (delay, fileCount, content) in results)
 		{
-			var hasMsg1 = content.Contains("Message 1");
-			var hasMsg2 = content.Contains("Message 2");
-			var hasMsg3 = content.Contains("Message 3");
+			var hasMsg1 = content.Contains("Message 1", StringComparison.Ordinal);
+			var hasMsg2 = content.Contains("Message 2", StringComparison.Ordinal);
+			var hasMsg3 = content.Contains("Message 3", StringComparison.Ordinal);
 			System.Console.WriteLine($"Delay {delay}ms: {fileCount} files, Msg1={hasMsg1}, Msg2={hasMsg2}, Msg3={hasMsg3}");
 		}
 
@@ -78,9 +79,9 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 			finalContent += await File.ReadAllTextAsync(file);
 		}
 
-		Assert.Contains("Message 1", finalContent);
-		Assert.Contains("Message 2", finalContent);
-		Assert.Contains("Message 3", finalContent);
+		Assert.Contains("Message 1", finalContent, StringComparison.Ordinal);
+		Assert.Contains("Message 2", finalContent, StringComparison.Ordinal);
+		Assert.Contains("Message 3", finalContent, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -88,7 +89,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 	{
 		// This test shows how proper disposal ensures all data is written
 		using var testContext = CreateTestContext(nameof(FileLogger_ProperDisposal_EnsuresAllDataWritten));
-		
+
 		var configuration = new ConfigurationBuilder()
 			.AddInMemoryCollection(new Dictionary<string, string?>
 			{
@@ -107,14 +108,14 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 		});
 
 		string finalContent;
-		
+
 		// Create scope to ensure proper disposal
 		{
 			using var serviceProvider = services.BuildServiceProvider();
 			var logger = serviceProvider.GetRequiredService<ILogger<FileLoggerReliabilityTests>>();
 
 			logger.LogInformation("Before disposal message");
-			
+
 			// Don't add any delay - disposal should handle flushing
 		} // ServiceProvider disposed here - should flush all buffers
 
@@ -126,7 +127,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 			finalContent += await File.ReadAllTextAsync(file);
 		}
 
-		Assert.Contains("Before disposal message", finalContent);
+		Assert.Contains("Before disposal message", finalContent, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -134,7 +135,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 	{
 		// This test ensures we're using the correct provider retrieval pattern
 		using var testContext = CreateTestContext(nameof(FileAndMemoryLoggers_ProperProviderRetrieval_WorksConsistently));
-		
+
 		var configuration = new ConfigurationBuilder()
 			.AddInMemoryCollection(new Dictionary<string, string?>
 			{
@@ -157,7 +158,7 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 
 		using var serviceProvider = services.BuildServiceProvider();
 		var logger = serviceProvider.GetRequiredService<ILogger<FileLoggerReliabilityTests>>();
-		
+
 		// Test both provider retrieval methods
 		var memoryProviderViaInterface = serviceProvider.GetRequiredService<IMemoryLoggerProvider>();
 		var memoryProviderViaType = serviceProvider.GetServices<ILoggerProvider>()
@@ -177,17 +178,17 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 		// Proper disposal ensures file logger flushes
 		using var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 		await Task.Delay(100); // Small delay for any async operations
-		
+
 		// Force disposal to flush file logger
 		loggerFactory.Dispose();
 		await Task.Delay(100); // Give file operations time to complete
 
 		// Check memory logger
 		var memoryEntries = memoryProviderViaInterface.Snapshot();
-		Assert.Contains(memoryEntries, e => e.Message.Contains("Debug"));
-		Assert.Contains(memoryEntries, e => e.Message.Contains("Info"));
-		Assert.Contains(memoryEntries, e => e.Message.Contains("Warning"));
-		Assert.Contains(memoryEntries, e => e.Message.Contains("Error"));
+		Assert.Contains(memoryEntries, e => e.Message.Contains("Debug", StringComparison.Ordinal));
+		Assert.Contains(memoryEntries, e => e.Message.Contains("Info", StringComparison.Ordinal));
+		Assert.Contains(memoryEntries, e => e.Message.Contains("Warning", StringComparison.Ordinal));
+		Assert.Contains(memoryEntries, e => e.Message.Contains("Error", StringComparison.Ordinal));
 
 		// Check file logger
 		var files = Directory.GetFiles(testContext.Directory, "*.log");
@@ -200,10 +201,10 @@ public class FileLoggerReliabilityTests : FileLoggerTestBase
 			}
 
 			// File should only have Warning and Error (not Debug/Info)
-			Assert.DoesNotContain("Debug", combinedContent);
-			Assert.DoesNotContain("Info", combinedContent);
-			Assert.Contains("Warning", combinedContent);
-			Assert.Contains("Error", combinedContent);
+			Assert.DoesNotContain("Debug", combinedContent, StringComparison.Ordinal);
+			Assert.DoesNotContain("Info", combinedContent, StringComparison.Ordinal);
+			Assert.Contains("Warning", combinedContent, StringComparison.Ordinal);
+			Assert.Contains("Error", combinedContent, StringComparison.Ordinal);
 		}
 	}
 }

@@ -66,12 +66,12 @@ public sealed class StructuredMultilineFormatter(
 	}
 
 	/// <inheritdoc />
-	protected override bool WriteException(Exception? exception)
+	protected override bool WriteException(Exception? exception, string? category)
 	{
 		if (exception is null)
 			return false;
 
-		var exceptionPanel = new Panel(new ExceptionDisplay(exception))
+		var exceptionPanel = new Panel(new ExceptionDisplay(exception, category))
 		{
 			Header = new PanelHeader("Exception"),
 			Border = BoxBorder.Rounded,
@@ -122,7 +122,7 @@ public sealed class StructuredMultilineFormatter(
 		WriteRow("Elapsed", $"{elapsedSeconds:0.000}s", Theme.Timestamp);
 
 		// Exception
-		WriteException(entry.Exception);
+		WriteException(entry.Exception, entry.Category);
 		Write(DimHR);
 
 		if (NewLine)

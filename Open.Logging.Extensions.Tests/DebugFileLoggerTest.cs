@@ -45,7 +45,7 @@ public class DebugFileLoggerTest
 		System.Threading.Thread.Sleep(1000);
 
 		// Check for files
-		var logFiles = Directory.Exists(tempDir) ? Directory.GetFiles(tempDir, "*.log") : Array.Empty<string>();
+		var logFiles = Directory.Exists(tempDir) ? Directory.GetFiles(tempDir, "*.log") : [];
 		System.Console.WriteLine($"Temp directory: {tempDir}");
 		System.Console.WriteLine($"Directory exists: {Directory.Exists(tempDir)}");
 		System.Console.WriteLine($"Found {logFiles.Length} log files");
